@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 function Home() {
     return (
         <div style={{ fontFamily: 'Arial', textAlign: 'center', padding: '20px' }}>
-            <h1 style={{ color: '#333' }}>iContas Financeiro 💰</h1>
+            <h1 style={{ color: '#e1dadaff' }}>iContas Financeiro 💰</h1>
             <p>O que você deseja fazer hoje?</p>
 
             <div style={{
@@ -24,13 +24,19 @@ function Home() {
                     💸 Lançar Entrada/Saída
                 </Link>
 
-                {/* Futuro Botão: Extrato (Deixamos pronto mas desativado visualmente) */}
-                <button style={{ ...estiloBotao, backgroundColor: '#ccc', cursor: 'not-allowed' }} disabled>
-                    📊 Ver Extrato (Em breve)
-                </button>
+                {/* Botão 3: Ir para Extrato */}
+                <Link to="/extrato" style={estiloBotao}>
+                    📊 Ver Extrato
+                </Link>  
 
+                <Link to="/analise" style={{...estiloBotao, backgroundColor: '#6f42c1'}}> {/* Cor roxa para destacar */}
+                    📈 Análise Gráfica
+                </Link>
             </div>
         </div>
+
+            
+
     )
 }
 

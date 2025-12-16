@@ -7,139 +7,83 @@ function FormularioTransacao() {
     const [data, setData] = useState('')
     const [descricao, setDescricao] = useState('')
     const [origem, setOrigem] = useState('')
+    const [local, setLocal] = useState('') // <--- Estado para guardar o GPS
     const [categoriaId, setCategoriaId] = useState('')
     const [listaCategorias, setListaCategorias] = useState([])
 
-    // Busca categorias ao carregar
     useEffect(() => {
         axios.get('http://127.0.0.1:5000/categorias')
-            .then(resposta => {
-                setListaCategorias(resposta.data)
-                if (resposta.data.length > 0) {
-                    setCategoriaId(resposta.data[0].id)
-                }
+            .then(res => {
+                setListaCategorias(res.data)
+                if (res.data.length > 0) setCategoriaId(res.data[0].id)
             })
-            .catch(erro => console.error("Erro ao buscar categorias:", erro))
+            .catch(erro => console.error(erro))
     }, [])
+
+    // Função para pegar GPS (Movemos para cá!)
+    const pegarGPS = (e) => {
+        e.preventDefault()
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                setLocal(`${pos.coords.latitude}, ${pos.coords.longitude}`)
+                alert("Localização capturada!")
+            }, () => alert("Erro ao pegar GPS"))
+        } else {
+            alert("Navegador sem suporte a GPS")
+        }
+    }
 
     const salvarTransacao = (e) => {
         e.preventDefault()
+        const url = tipo === 'entrada' ? 'http://127.0.0.1:5000/entradas' : 'http://127.0.0.1:5000/saidas'
 
-        const dados = {
+        axios.post(url, {
             valor: parseFloat(valor),
-            data: data,
-            descricao: descricao,
-            origem: origem,
+            data,
+            descricao,
+            origem,
+            local, // <--- Enviando o GPS
             categoria_id: categoriaId
-        }
-
-        const url = tipo === 'entrada'
-            ? 'http://127.0.0.1:5000/entradas'
-            : 'http://127.0.0.1:5000/saidas'
-
-        axios.post(url, dados)
+        })
             .then(() => {
-                alert(`${tipo === 'entrada' ? 'Entrada' : 'Saída'} salva com sucesso!`)
-                setValor('')
-                setDescricao('')
-                setOrigem('')
+                alert('Salvo com sucesso!')
+                setValor(''); setDescricao(''); setLocal('')
             })
-            .catch(erro => {
-                // CORREÇÃO AQUI: Agora usamos a variável 'erro' no console
-                console.error("Detalhes do erro:", erro)
-                alert("Erro ao salvar! Verifique se preencheu tudo.")
-            })
+            .catch(erro => console.error(erro))
     }
 
     return (
         <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '8px', maxWidth: '400px', margin: '20px auto' }}>
-            <h2>Lançar Movimentação</h2>
+            <h2>Lançar {tipo === 'entrada' ? 'Entrada' : 'Saída'}</h2>
             <form onSubmit={salvarTransacao}>
 
-                <div style={{ marginBottom: '15px', display: 'flex', gap: '20px' }}>
-                    <label>
-                        <input
-                            type="radio"
-                            name="tipo"
-                            value="entrada"
-                            checked={tipo === 'entrada'}
-                            onChange={() => setTipo('entrada')}
-                        /> Entrada
-                    </label>
-                    <label>
-                        <input
-                            type="radio"
-                            name="tipo"
-                            value="saida"
-                            checked={tipo === 'saida'}
-                            onChange={() => setTipo('saida')}
-                        /> Saída
-                    </label>
+                {/* Escolha do Tipo */}
+                <div style={{ marginBottom: '15px', display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                    <label><input type="radio" name="tipo" value="entrada" checked={tipo === 'entrada'} onChange={() => setTipo('entrada')} /> Entrada</label>
+                    <label><input type="radio" name="tipo" value="saida" checked={tipo === 'saida'} onChange={() => setTipo('saida')} /> Saída</label>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                    <input
-                        type="number"
-                        placeholder="R$ Valor"
-                        value={valor}
-                        onChange={e => setValor(e.target.value)}
-                        required
-                        style={{ flex: 1, padding: '8px' }}
-                    />
-                    <input
-                        type="date"
-                        value={data}
-                        onChange={e => setData(e.target.value)}
-                        required
-                        style={{ flex: 1, padding: '8px' }}
-                    />
+                <input type="number" placeholder="Valor (R$)" value={valor} onChange={e => setValor(e.target.value)} required style={{ width: '90%', padding: '10px', marginBottom: '10px' }} />
+                <input type="date" value={data} onChange={e => setData(e.target.value)} required style={{ width: '90%', padding: '10px', marginBottom: '10px' }} />
+                <input type="text" placeholder="Descrição" value={descricao} onChange={e => setDescricao(e.target.value)} style={{ width: '90%', padding: '10px', marginBottom: '10px' }} />
+                <input type="text" placeholder="Origem (Banco, Carteira)" value={origem} onChange={e => setOrigem(e.target.value)} style={{ width: '90%', padding: '10px', marginBottom: '10px' }} />
+
+                {/* CAMPO DE LOCALIZAÇÃO NOVO */}
+                <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+                    <input type="text" placeholder="Localização" value={local} onChange={e => setLocal(e.target.value)} style={{ flex: 1, padding: '10px' }} />
+                    <button type="button" onClick={pegarGPS} style={{ cursor: 'pointer' }}>📍</button>
                 </div>
-
-                <input
-                    type="text"
-                    placeholder="Descrição (ex: Almoço)"
-                    value={descricao}
-                    onChange={e => setDescricao(e.target.value)}
-                    style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-                />
-
-                <input
-                    type="text"
-                    placeholder="Origem (ex: Nubank)"
-                    value={origem}
-                    onChange={e => setOrigem(e.target.value)}
-                    style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-                />
 
                 <label>Categoria:</label>
-                <select
-                    value={categoriaId}
-                    onChange={e => setCategoriaId(e.target.value)}
-                    style={{ width: '100%', padding: '8px', marginBottom: '20px' }}
-                >
-                    {listaCategorias.map(cat => (
-                        <option key={cat.id} value={cat.id}>
-                            {cat.principal} - {cat.estabelecimento}
-                        </option>
-                    ))}
+                <select value={categoriaId} onChange={e => setCategoriaId(e.target.value)} style={{ width: '90%', padding: '10px', marginBottom: '20px', display: 'block' }}>
+                    {listaCategorias.map(c => <option key={c.id} value={c.id}>{c.principal}</option>)}
                 </select>
 
-                <button
-                    type="submit"
-                    style={{
-                        width: '100%',
-                        padding: '10px',
-                        backgroundColor: tipo === 'entrada' ? '#007bff' : '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        cursor: 'pointer'
-                    }}>
-                    Salvar
+                <button type="submit" style={{ width: '90%', padding: '12px', backgroundColor: tipo === 'entrada' ? '#007bff' : '#dc3545', color: 'white', border: 'none', borderRadius: '4px' }}>
+                    Confirmar Lançamento
                 </button>
-
             </form>
         </div>
     )
 }
-
 export default FormularioTransacao

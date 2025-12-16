@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Home from './components/Home'
 import FormularioCategoria from './components/FormCategoria'
 import FormularioTransacao from './components/FormTransacao'
+import Extrato from './components/Extrato'
+import AnaliseGrafica from './components/AnaliseGrafica' // Importe no topo
 
 function App() {
   return (
@@ -26,6 +28,20 @@ function App() {
             <FormularioTransacao />
           </div>
         } />
+        {/* Rota pág Extrato */}
+        <Route path="/extrato" element={
+          <div>
+              <Link to="/" style={{ display: 'block', margin: '10px', textDecoration: 'none' }}>⬅ Voltar ao Menu</Link>
+              <Extrato /> 
+            </div>
+        } />
+        {/* Rota pág Análise Gráfica */}
+      <Route path="/analise" element={
+        <div>
+          <Link to="/" style={{ display: 'block', margin: '10px', textDecoration: 'none' }}>⬅ Voltar ao Menu</Link>
+          <AnaliseGrafica />
+        </div>
+      } />
 
       </Routes>
     </BrowserRouter>
