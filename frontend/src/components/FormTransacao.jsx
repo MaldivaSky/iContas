@@ -53,8 +53,8 @@ function FormularioTransacao() {
     }
 
     return (
-        <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '8px', maxWidth: '400px', margin: '20px auto' }}>
-            <h2>Lançar {tipo === 'entrada' ? 'Entrada' : 'Saída'}</h2>
+        <div className="card-responsivo">
+            <h2 style={{ marginTop: 0 }}>Lançar Movimentação {tipo === 'entrada' ? 'Entrada' : 'Saída'}</h2>
             <form onSubmit={salvarTransacao}>
 
                 {/* Escolha do Tipo */}
@@ -75,11 +75,11 @@ function FormularioTransacao() {
                 </div>
 
                 <label>Categoria:</label>
-                <select value={categoriaId} onChange={e => setCategoriaId(e.target.value)} style={{ width: '90%', padding: '10px', marginBottom: '20px', display: 'block' }}>
+                <select value={categoriaId} onChange={e => setCategoriaId(e.target.value)} style={{ width: '90%', padding: '10px', marginBottom: '20px', display: 'block', marginTop: '5px' }}>
                     {listaCategorias.map(c => <option key={c.id} value={c.id}>{c.principal}</option>)}
                 </select>
 
-                <button type="submit" style={{ width: '90%', padding: '12px', backgroundColor: tipo === 'entrada' ? '#007bff' : '#dc3545', color: 'white', border: 'none', borderRadius: '4px' }}>
+                <button type="submit" style={{ width: '90%', padding: '12px', backgroundColor: tipo === 'entrada' ? '#007bff' : '#dc3545', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                     Confirmar Lançamento
                 </button>
             </form>

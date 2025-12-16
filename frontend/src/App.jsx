@@ -3,7 +3,8 @@ import Home from './components/Home'
 import FormularioCategoria from './components/FormCategoria'
 import FormularioTransacao from './components/FormTransacao'
 import Extrato from './components/Extrato'
-import AnaliseGrafica from './components/AnaliseGrafica' // Importe no topo
+import AnaliseGrafica from './components/AnaliseGrafica' 
+import Calculadora from './components/Calculadora'
 
 function App() {
   return (
@@ -42,6 +43,8 @@ function App() {
           <AnaliseGrafica />
         </div>
       } />
+
+      <Route path="/calculadora" element={<Calculadora />} />
 
       </Routes>
     </BrowserRouter>
