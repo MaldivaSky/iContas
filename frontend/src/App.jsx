@@ -1,52 +1,82 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
+import Navbar from './components/NavBar'
 import Home from './components/Home'
+import Login from './components/Login'
+import Cadastro from './components/Cadastro'
 import FormularioCategoria from './components/FormCategoria'
 import FormularioTransacao from './components/FormTransacao'
 import Extrato from './components/Extrato'
-import AnaliseGrafica from './components/AnaliseGrafica' 
+import AnaliseGrafica from './components/AnaliseGrafica'
 import Calculadora from './components/Calculadora'
+import AutoLogout from './components/AutoLogout' 
+import Perfil from './components/Perfil'
+import EsqueciSenha from './components/EsqueciSenha'
+import RedefinirSenha from './components/RedefinirSenha'
+
+// Importe o Segurança
+import RotaProtegida from './components/RotaProtegida'
 
 function App() {
   return (
     <BrowserRouter>
-      {/* O Routes funciona como um "Switch". Ele escolhe UMA rota por vez. */}
-      <Routes>
+      <AutoLogout />
+      <Navbar />
 
-        {/* Rota Raiz (O Menu Principal) */}
-        <Route path="/" element={<Home />} />
+      <div style={{ padding: '20px' }}>
+        <Routes>
+          {/* --- ROTAS PÚBLICAS (Qualquer um entra) --- */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/cadastro" element={<Cadastro />} />
 
-        {/* Rotas das Páginas */}
-        <Route path="/categorias" element={
-          <div>
-            <Link to="/" style={{ display: 'block', margin: '10px', textDecoration: 'none' }}>⬅ Voltar ao Menu</Link>
-            <FormularioCategoria />
-          </div>
-        } />
+          {/* --- ROTAS PROTEGIDAS (Só com Token) --- */}
+          {/* Note como envolvemos o componente dentro da RotaProtegida */}
 
-        <Route path="/transacoes" element={
-          <div>
-            <Link to="/" style={{ display: 'block', margin: '10px', textDecoration: 'none' }}>⬅ Voltar ao Menu</Link>
-            <FormularioTransacao />
-          </div>
-        } />
-        {/* Rota pág Extrato */}
-        <Route path="/extrato" element={
-          <div>
-              <Link to="/" style={{ display: 'block', margin: '10px', textDecoration: 'none' }}>⬅ Voltar ao Menu</Link>
-              <Extrato /> 
-            </div>
-        } />
-        {/* Rota pág Análise Gráfica */}
-      <Route path="/analise" element={
-        <div>
-          <Link to="/" style={{ display: 'block', margin: '10px', textDecoration: 'none' }}>⬅ Voltar ao Menu</Link>
-          <AnaliseGrafica />
-        </div>
-      } />
+          <Route path="/" element={
+            <RotaProtegida>
+              <Home />
+            </RotaProtegida>
+          } />
 
-      <Route path="/calculadora" element={<Calculadora />} />
+          <Route path="/categorias" element={
+            <RotaProtegida>
+              <FormularioCategoria />
+            </RotaProtegida>
+          } />
 
-      </Routes>
+          <Route path="/transacoes" element={
+            <RotaProtegida>
+              <FormularioTransacao />
+            </RotaProtegida>
+          } />
+
+          <Route path="/extrato" element={
+            <RotaProtegida>
+              <Extrato />
+            </RotaProtegida>
+          } />
+
+          <Route path="/analise" element={
+            <RotaProtegida>
+              <AnaliseGrafica />
+            </RotaProtegida>
+          } />
+
+          <Route path="/calculadora" element={
+            <RotaProtegida>
+              <Calculadora />
+            </RotaProtegida>
+          } />
+
+          <Route path="/perfil" element={<RotaProtegida><Perfil /></RotaProtegida>} />
+          {/* Rota pública para pedir o link */}
+          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+
+          {/* Rota pública que recebe o token (O :token significa que é variável) */}
+          <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />  
+
+        </Routes>
+      </div>
     </BrowserRouter>
   )
 }
