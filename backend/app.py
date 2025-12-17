@@ -1,15 +1,70 @@
+import os
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Categoria, Entrada, Saida
-from datetime import datetime
+from flask_mail import Mail, Message
+import random
+
+# --- FERRAMENTAS DE SEGURANÇA (SENHA E ARQUIVO) ---
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+
+# --- FERRAMENTAS DE TOKEN (JWT) - AQUI ESTAVA O ERRO ---
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    jwt_required,
+    get_jwt_identity,
+)
+
+# --- SEUS MODELOS (TABELAS) ---
+from models import Base, Categoria, Entrada, Saida, Usuario
 
 app = Flask(__name__)
 CORS(app)
 
+
 engine = create_engine("sqlite:///financeiro.db")
 Session = sessionmaker(bind=engine)
+
+app = Flask(__name__)
+CORS(app)
+
+# ... Configurações de JWT e Upload (mantenha como estão) ...
+
+# --- CONFIGURAÇÃO DO GMAIL ---
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 465
+app.config["MAIL_USERNAME"] = "rafaelmaldivas@gmail.com"  # <--- COLOQUE SEU GMAIL AQUI
+app.config["MAIL_PASSWORD"] = (
+    "ribp qcbf xhqr sgvz"  # <--- COLOQUE A SENHA DE APP DE 16 LETRAS AQUI
+)
+app.config["MAIL_USE_TLS"] = False
+app.config["MAIL_USE_SSL"] = True
+mail = Mail(app)  # Inicializa o correio
+
+# --- CONFIGURAÇÃO DO JWT ---
+app.config["JWT_SECRET_KEY"] = "chave-super-secreta-do-rafael"
+# Iniciamos o gerenciador de token (Essa linha resolve o seu erro atual!)
+jwt = JWTManager(app)
+
+
+@jwt.invalid_token_loader
+def invalid_token_callback(error_string):
+    print("=" * 30)
+    print(f"🚨 ERRO DE TOKEN DETECTADO: {error_string}")
+    print("=" * 30)
+    return jsonify({"msg": error_string}), 422
+
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    print("=" * 30)
+    print("🚨 ERRO: O TOKEN EXPIROU!")
+    print("=" * 30)
+    return jsonify({"msg": "Token expired"}), 401
 
 
 @app.route("/")
@@ -237,6 +292,274 @@ def dados_graficos():
             "grafico": {"labels": labels_grafico, "data": valores_grafico},
         }
     )
+
+# CONFIGURAÇÃO DE UPLOADS
+UPLOAD_FOLDER = "static/uploads"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
+# Função para verificar se a imagem é válida
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# --- ROTA DE REGISTRO ATUALIZADA (Com Foto!) ---
+@app.route("/registro", methods=["POST"])
+def registrar():
+    session = Session()
+
+    # Em upload de arquivo, os dados vêm em 'form', não 'json'
+    nome_completo = request.form["nome_completo"]
+    username = request.form["username"]
+    email = request.form["email"]
+    senha = request.form["senha"]
+    nascimento = request.form["nascimento"]
+    foto = request.files.get("foto")  # Pega o arquivo
+
+    # Verifica duplicidade
+    if (
+        session.query(Usuario)
+        .filter((Usuario.email == email) | (Usuario.username == username))
+        .first()
+    ):
+        session.close()
+        return jsonify({"erro": "Email ou Usuário já cadastrado!"}), 400
+
+    # Salva a foto (se tiver)
+    caminho_foto = None
+    if foto and allowed_file(foto.filename):
+        filename = secure_filename(
+            f"{username}_{foto.filename}"
+        )  # Evita nomes duplicados
+        foto.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        caminho_foto = filename  # Salva só o nome no banco
+
+    senha_segura = generate_password_hash(senha)
+
+    novo = Usuario(
+        nome_completo=nome_completo,
+        username=username,
+        email=email,
+        senha_hash=senha_segura,
+        nascimento=datetime.strptime(nascimento, "%Y-%m-%d").date(),
+        foto_path=caminho_foto,
+    )
+
+    session.add(novo)
+    session.commit()
+    session.close()
+    return jsonify({"mensagem": "Conta criada com sucesso!"}), 201
+
+
+# --- ROTA DE LOGIN (Retorna a foto) ---
+@app.route("/login", methods=["POST"])
+def login():
+    session = Session()
+    dados = request.json
+
+    print(
+        f"Tentativa de login: {dados}"
+    )  # <--- ADICIONE ISSO para ver no terminal o que chega!
+
+    # AQUI ESTÁ O SEGREDO:
+    # O React manda 'login', mas no banco temos que testar se é 'email' OU 'username'
+    usuario = (
+        session.query(Usuario)
+        .filter(
+            (Usuario.email == dados["login"]) | (Usuario.username == dados["login"])
+        )
+        .first()
+    )
+
+    session.close()
+
+    if not usuario:
+        return jsonify({"erro": "Usuário não encontrado"}), 401
+
+    if not check_password_hash(usuario.senha_hash, dados["senha"]):
+        return jsonify({"erro": "Senha incorreta"}), 401
+
+    # Se chegou aqui, deu tudo certo!
+    token = create_access_token(identity=str(usuario.id))
+
+    url_foto = None
+    if usuario.foto_path:
+        # Garante que a URL esteja completa para o React não se perder
+        url_foto = f"http://127.0.0.1:5000/static/uploads/{usuario.foto_path}"
+
+    return jsonify(
+        {
+            "token": token,
+            "nome": usuario.nome_completo,
+            "username": usuario.username,
+            "foto": url_foto,
+        }
+    )
+
+
+# --- ROTA 1: PEGAR DADOS DO PERFIL (Para mostrar na tela da foto) ---
+@app.route("/meus-dados", methods=["GET"])
+@jwt_required()
+def meus_dados():
+    usuario_id = get_jwt_identity()  # O token diz quem é o usuário
+    session = Session()
+    usuario = session.query(Usuario).filter_by(id=usuario_id).first()
+
+    if not usuario:
+        return jsonify({"erro": "Usuário não encontrado"}), 404
+
+    url_foto = None
+    if usuario.foto_path:
+        url_foto = f"http://127.0.0.1:5000/static/uploads/{usuario.foto_path}"
+
+    dados = {
+        "nome_completo": usuario.nome_completo,
+        "email": usuario.email,
+        "username": usuario.username,
+        "nascimento": str(usuario.nascimento),
+        "foto": url_foto,
+    }
+    session.close()
+    return jsonify(dados)
+
+
+# --- ROTA 2: ALTERAR SENHA (Usuário LOGADO) ---
+@app.route("/alterar-senha", methods=["PUT"])
+@jwt_required()
+def alterar_senha():
+    usuario_id = get_jwt_identity()
+    dados = request.json
+    nova_senha = dados.get("nova_senha")
+
+    session = Session()
+    usuario = session.query(Usuario).filter_by(id=usuario_id).first()
+
+    usuario.senha_hash = generate_password_hash(nova_senha)
+    session.commit()
+    session.close()
+
+    return jsonify({"mensagem": "Senha atualizada com sucesso!"})
+
+
+# --- ROTA 1: ENVIA O EMAIL COM LINK ---
+@app.route("/esqueci-senha", methods=["POST"])
+def esqueci_senha():
+    email = request.json.get("email")
+    session = Session()
+    usuario = session.query(Usuario).filter_by(email=email).first()
+
+    if not usuario:
+        session.close()
+        return jsonify({"erro": "E-mail não encontrado"}), 404
+
+    # Gera um token que expira em 15 minutos
+    # Usamos o ID do usuário como identidade do token
+    expires = timedelta(minutes=15)
+    token = create_access_token(identity=str(usuario.id), expires_delta=expires)
+
+    # Cria o Link para o Frontend (React)
+    # Note que a porta é 5173 (onde roda o site), não 5000 (onde roda o python)
+    link = f"http://localhost:5173/redefinir-senha/{token}"
+
+    # --- ENVIO DE E-MAIL ---
+    try:
+        msg = Message(
+            subject="Redefinição de Senha - iContas",
+            sender=app.config["MAIL_USERNAME"],
+            recipients=[email],
+            body=f"Olá, {usuario.nome_completo}!\n\nPara criar uma nova senha, clique no link abaixo:\n{link}\n\nEste link expira em 15 minutos.",
+        )
+        mail.send(msg)
+        print(f"Link enviado: {link}")  # Debug no terminal caso o email falhe
+    except Exception as e:
+        print(f"Erro email: {e}")
+        return jsonify({"erro": "Erro ao enviar email"}), 500
+
+    session.close()
+    return jsonify({"mensagem": "Link de recuperação enviado para seu e-mail!"})
+
+
+# --- ROTA 2: RECEBE O TOKEN E A NOVA SENHA ---
+@app.route("/resetar-senha-token", methods=["POST"])
+@jwt_required()  # O token vem no Header ou via validação manual, mas aqui vamos validar o token que veio na URL
+def resetar_senha_token():
+    usuario_id = get_jwt_identity()  # O Flask extrai o ID de dentro do token do link
+    dados = request.json
+    nova_senha = dados.get("nova_senha")
+
+    session = Session()
+    usuario = session.query(Usuario).filter_by(id=usuario_id).first()
+
+    if not usuario:
+        session.close()
+        return jsonify({"erro": "Usuário inválido"}), 404
+
+    # Atualiza a senha
+    usuario.senha_hash = generate_password_hash(nova_senha)
+    session.commit()
+
+    # --- E-MAIL DE CONFIRMAÇÃO ---
+    try:
+        # Link para a tela de login do Frontend
+        link_login = "http://localhost:5173/login"
+
+        msg = Message(
+            subject="Senha Alterada com Sucesso - iContas",
+            sender=app.config["MAIL_USERNAME"],
+            recipients=[usuario.email],
+            body=f"""Olá, {usuario.nome_completo}!
+
+Sua senha foi alterada com sucesso. Agora você já pode acessar sua conta.
+
+Clique aqui para entrar:
+{link_login}
+
+Se você não fez essa alteração, entre em contato conosco imediatamente.""",
+        )
+        mail.send(msg)
+    except Exception as e:
+        print(f"Erro ao enviar confirmação: {e}")
+        # Não retornamos erro aqui para não assustar o usuário, já que a senha FOI trocada.
+
+    session.close()
+    return jsonify({"mensagem": "Senha alterada com sucesso!"})
+
+
+@app.route("/atualizar-foto", methods=["POST"])
+@jwt_required()
+def atualizar_foto():
+    usuario_id = get_jwt_identity()
+    arquivo = request.files.get("foto")  # Pega o arquivo enviado
+
+    if not arquivo:
+        return jsonify({"erro": "Nenhuma foto enviada"}), 400
+
+    session = Session()
+    usuario = session.query(Usuario).filter_by(id=usuario_id).first()
+
+    if arquivo and allowed_file(arquivo.filename):
+        # Cria um nome único para não substituir fotos de outros (usa o ID + timestamp)
+        extensao = arquivo.filename.rsplit(".", 1)[1].lower()
+        novo_nome = f"user_{usuario_id}_{int(datetime.now().timestamp())}.{extensao}"
+        filename = secure_filename(novo_nome)
+
+        # Salva na pasta
+        arquivo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+
+        # Atualiza no banco
+        usuario.foto_path = filename
+        session.commit()
+
+        # Gera a nova URL para devolver ao React
+        nova_url = f"http://127.0.0.1:5000/static/uploads/{filename}"
+
+        session.close()
+        return jsonify({"mensagem": "Foto atualizada!", "nova_foto": nova_url})
+
+    session.close()
+    return jsonify({"erro": "Arquivo inválido"}), 400
 
 
 if __name__ == "__main__":
