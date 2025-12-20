@@ -563,4 +563,5 @@ def atualizar_foto():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # host='0.0.0.0' libera o acesso para a rede Wi-Fi
+    app.run(debug=True, host="0.0.0.0", port=5000)
