@@ -1,11 +1,11 @@
 import os
 from datetime import datetime, timedelta
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask_mail import Mail, Message
-import random
+
 
 # --- FERRAMENTAS DE SEGURANÇA (SENHA E ARQUIVO) ---
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -562,23 +562,21 @@ def atualizar_foto():
     return jsonify({"erro": "Arquivo inválido"}), 400
 
 
-# --- ROTA PARA ESPIAR OS DADOS ---
-@app.route("/admin/ver-usuarios")
-def ver_usuarios():
-    # Busca TODOS os usuários do banco
-    todos = User.query.all()
+# --- ROTA SECRETA PARA BAIXAR O BANCO ---
+@app.route("/admin/baixar-banco-secreto")
+def baixar_banco():
+    # O nome exato que vimos na sua imagem
+    nome_arquivo = "financeiro.db"
 
-    # Monta uma lista simples em HTML
-    html_resposta = "<h1>Lista de Usuários (Acesso Restrito)</h1>"
-    html_resposta += "<ul>"
+    # Procura o arquivo na pasta onde o app está rodando
+    caminho_arquivo = os.path.join(os.getcwd(), nome_arquivo)
 
-    for u in todos:
-        # Mostra ID, Nome e Email (ajuste os nomes dos campos se for diferente)
-        html_resposta += f"<li>ID: {u.id} | Nome: {u.nome} | Email: {u.email}</li>"
-
-    html_resposta += "</ul>"
-
-    return html_resposta
+    if os.path.exists(caminho_arquivo):
+        return send_file(caminho_arquivo, as_attachment=True)
+    else:
+        return (
+            f"<h1>Erro: O arquivo '{nome_arquivo}' não foi encontrado no servidor.</h1>"
+        )
 
 
 if __name__ == "__main__":
