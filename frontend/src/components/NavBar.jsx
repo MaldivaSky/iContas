@@ -22,8 +22,11 @@ function Navbar() {
 
             {/* --- LADO ESQUERDO: LOGO --- */}
             <Link to="/" style={styles.logoLink}>
-                <span style={styles.logoIcon}>💰</span>
-                <span style={styles.logoText}>iContas</span>
+                <img
+                    src="/logo2.png"
+                    alt="Logo iContas"
+                    style={{ width: '180px', height: '120px' }}
+                />
             </Link>
 
             {/* --- LADO DIREITO --- */}

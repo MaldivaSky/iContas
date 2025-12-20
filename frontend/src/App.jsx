@@ -9,10 +9,11 @@ import FormularioTransacao from './components/FormTransacao'
 import Extrato from './components/Extrato'
 import AnaliseGrafica from './components/AnaliseGrafica'
 import Calculadora from './components/Calculadora'
-import AutoLogout from './components/AutoLogout' 
+import AutoLogout from './components/AutoLogout'
 import Perfil from './components/Perfil'
 import EsqueciSenha from './components/EsqueciSenha'
 import RedefinirSenha from './components/RedefinirSenha'
+import Footer from './components/Footer' // <--- 1. Certifique-se que importou aqui
 
 // Importe o Segurança
 import RotaProtegida from './components/RotaProtegida'
@@ -20,62 +21,67 @@ import RotaProtegida from './components/RotaProtegida'
 function App() {
   return (
     <BrowserRouter>
-      <AutoLogout />
-      <Navbar />
+      {/* 2. Criei essa div PAIMENT que segura tudo com minHeight 100vh */}
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
-      <div style={{ padding: '20px' }}>
-        <Routes>
-          {/* --- ROTAS PÚBLICAS (Qualquer um entra) --- */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/cadastro" element={<Cadastro />} />
+        <AutoLogout />
+        <Navbar />
 
-          {/* --- ROTAS PROTEGIDAS (Só com Token) --- */}
-          {/* Note como envolvemos o componente dentro da RotaProtegida */}
+        {/* 3. Adicionei 'flex: 1' aqui. Isso faz essa área crescer e empurrar o footer */}
+        <div style={{ padding: '20px', flex: 1 }}>
+          <Routes>
+            {/* --- ROTAS PÚBLICAS --- */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Cadastro />} />
 
-          <Route path="/" element={
-            <RotaProtegida>
-              <Home />
-            </RotaProtegida>
-          } />
+            {/* --- ROTAS PROTEGIDAS --- */}
+            <Route path="/" element={
+              <RotaProtegida>
+                <Home />
+              </RotaProtegida>
+            } />
 
-          <Route path="/categorias" element={
-            <RotaProtegida>
-              <FormularioCategoria />
-            </RotaProtegida>
-          } />
+            <Route path="/categorias" element={
+              <RotaProtegida>
+                <FormularioCategoria />
+              </RotaProtegida>
+            } />
 
-          <Route path="/transacoes" element={
-            <RotaProtegida>
-              <FormularioTransacao />
-            </RotaProtegida>
-          } />
+            <Route path="/transacoes" element={
+              <RotaProtegida>
+                <FormularioTransacao />
+              </RotaProtegida>
+            } />
 
-          <Route path="/extrato" element={
-            <RotaProtegida>
-              <Extrato />
-            </RotaProtegida>
-          } />
+            <Route path="/extrato" element={
+              <RotaProtegida>
+                <Extrato />
+              </RotaProtegida>
+            } />
 
-          <Route path="/analise" element={
-            <RotaProtegida>
-              <AnaliseGrafica />
-            </RotaProtegida>
-          } />
+            <Route path="/analise" element={
+              <RotaProtegida>
+                <AnaliseGrafica />
+              </RotaProtegida>
+            } />
 
-          <Route path="/calculadora" element={
-            <RotaProtegida>
-              <Calculadora />
-            </RotaProtegida>
-          } />
+            <Route path="/calculadora" element={
+              <RotaProtegida>
+                <Calculadora />
+              </RotaProtegida>
+            } />
 
-          <Route path="/perfil" element={<RotaProtegida><Perfil /></RotaProtegida>} />
-          {/* Rota pública para pedir o link */}
-          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+            <Route path="/perfil" element={<RotaProtegida><Perfil /></RotaProtegida>} />
 
-          {/* Rota pública que recebe o token (O :token significa que é variável) */}
-          <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />  
+            <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+            <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
 
-        </Routes>
+          </Routes>
+        </div>
+
+        {/* 4. O Footer entra aqui, fora da div de conteúdo, mas dentro da div Pai */}
+        <Footer />
+
       </div>
     </BrowserRouter>
   )
