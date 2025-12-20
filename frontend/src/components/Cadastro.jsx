@@ -39,7 +39,7 @@ function Cadastro() {
             formData.append('foto', foto)
         }
 
-        axios.post('http://127.0.0.1:5000/registro', formData, {
+        axios.post('https://icontas.onrender.com/registro', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data' // Avisa o Python que tem arquivo indo
             }

@@ -20,7 +20,7 @@ function Perfil() {
             return
         }
 
-        axios.get('http://127.0.0.1:5000/meus-dados', {
+        axios.get('https://icontas.onrender.com/meus-dados', {
             headers: { Authorization: 'Bearer ' + token }
         })
             .then(res => {
@@ -55,7 +55,7 @@ function Perfil() {
         formData.append('foto', arquivo)
         const token = localStorage.getItem('token')
 
-        axios.post('http://127.0.0.1:5000/atualizar-foto', formData, {
+        axios.post('https://icontas.onrender.com/atualizar-foto', formData, {
             headers: {
                 Authorization: 'Bearer ' + token,
                 'Content-Type': 'multipart/form-data'

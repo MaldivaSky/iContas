@@ -387,7 +387,7 @@ def login():
     url_foto = None
     if usuario.foto_path:
         # Garante que a URL esteja completa para o React não se perder
-        url_foto = f"http://127.0.0.1:5000/static/uploads/{usuario.foto_path}"
+        url_foto = f"https://icontas.onrender.com/static/uploads/{usuario.foto_path}"
 
     return jsonify(
         {
@@ -412,7 +412,7 @@ def meus_dados():
 
     url_foto = None
     if usuario.foto_path:
-        url_foto = f"http://127.0.0.1:5000/static/uploads/{usuario.foto_path}"
+        url_foto = f"https://icontas.onrender.com/static/uploads/{usuario.foto_path}"
 
     dados = {
         "nome_completo": usuario.nome_completo,
@@ -553,7 +553,7 @@ def atualizar_foto():
         session.commit()
 
         # Gera a nova URL para devolver ao React
-        nova_url = f"http://127.0.0.1:5000/static/uploads/{filename}"
+        nova_url = f"https://icontas.onrender.com/static/uploads/{filename}"
 
         session.close()
         return jsonify({"mensagem": "Foto atualizada!", "nova_foto": nova_url})
