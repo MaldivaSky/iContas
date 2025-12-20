@@ -562,21 +562,43 @@ def atualizar_foto():
     return jsonify({"erro": "Arquivo inválido"}), 400
 
 
-# --- ROTA SECRETA PARA BAIXAR O BANCO ---
-@app.route("/admin/baixar-banco-secreto")
-def baixar_banco():
-    # O nome exato que vimos na sua imagem
-    nome_arquivo = "financeiro.db"
+# --- ROTA DE RAIO-X (DEBUG) ---
+@app.route("/admin/raio-x")
+def raio_x():
+    # 1. Descobre a pasta exata onde o app.py está
+    pasta_atual = os.path.dirname(os.path.abspath(__file__))
 
-    # Procura o arquivo na pasta onde o app está rodando
-    caminho_arquivo = os.path.join(os.getcwd(), nome_arquivo)
+    # 2. Lista todos os arquivos nessa pasta
+    lista_arquivos = os.listdir(pasta_atual)
 
-    if os.path.exists(caminho_arquivo):
-        return send_file(caminho_arquivo, as_attachment=True)
+    # 3. Tenta achar o banco
+    nome_banco = "financeiro.db"
+    caminho_completo = os.path.join(pasta_atual, nome_banco)
+
+    if nome_banco in lista_arquivos:
+        # SE ACHOU: Mostra botão para baixar
+        return f"""
+        <h1>Arquivo Encontrado! 🕵️‍♂️</h1>
+        <p>Ele está aqui: {caminho_completo}</p>
+        <p>Outros arquivos aqui: {lista_arquivos}</p>
+        <br>
+        <a href="/admin/baixar-agora"><button style="font-size:20px; padding:10px;">BAIXAR O BANCO AGORA 📥</button></a>
+        """
     else:
-        return (
-            f"<h1>Erro: O arquivo '{nome_arquivo}' não foi encontrado no servidor.</h1>"
-        )
+        # SE NÃO ACHOU: Mostra o que tem lá para a gente entender
+        return f"""
+        <h1>Arquivo NÃO achado 😱</h1>
+        <p>Estou procurando na pasta: {pasta_atual}</p>
+        <p>Mas só encontrei estes arquivos: {lista_arquivos}</p>
+        """
+
+
+# --- ROTA QUE O BOTÃO ACIMA VAI CHAMAR ---
+@app.route("/admin/baixar-agora")
+def baixar_agora_mesmo():
+    pasta_atual = os.path.dirname(os.path.abspath(__file__))
+    caminho = os.path.join(pasta_atual, "financeiro.db")
+    return send_file(caminho, as_attachment=True)
 
 
 if __name__ == "__main__":
