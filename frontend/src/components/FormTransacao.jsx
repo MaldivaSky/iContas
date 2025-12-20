@@ -12,7 +12,7 @@ function FormularioTransacao() {
     const [listaCategorias, setListaCategorias] = useState([])
 
     useEffect(() => {
-        axios.get('http://127.0.0.1:5000/categorias')
+        axios.get('https://icontas.onrender.com/categorias')
             .then(res => {
                 setListaCategorias(res.data)
                 if (res.data.length > 0) setCategoriaId(res.data[0].id)
@@ -35,7 +35,7 @@ function FormularioTransacao() {
 
     const salvarTransacao = (e) => {
         e.preventDefault()
-        const url = tipo === 'entrada' ? 'http://127.0.0.1:5000/entradas' : 'http://127.0.0.1:5000/saidas'
+        const url = tipo === 'entrada' ? 'https://icontas.onrender.com/entradas' : 'https://icontas.onrender.com/saidas'
 
         axios.post(url, {
             valor: parseFloat(valor),

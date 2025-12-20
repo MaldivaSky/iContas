@@ -10,7 +10,7 @@ function EsqueciSenha() {
         e.preventDefault()
         setLoading(true)
 
-        axios.post('http://127.0.0.1:5000/esqueci-senha', { email })
+        axios.post('https://icontas.onrender.com/esqueci-senha', { email })
             .then(() => {
                 alert('Boa! Verifique seu e-mail (e a caixa de spam). O link dura 15 minutos.')
                 setEmail('')

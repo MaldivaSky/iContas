@@ -11,7 +11,7 @@ function Login() {
     const handleLogin = (e) => {
         e.preventDefault()
 
-        axios.post('http://127.0.0.1:5000/login', {
+        axios.post('https://icontas.onrender.com/login', {
             login: login,
             senha: senha
         })

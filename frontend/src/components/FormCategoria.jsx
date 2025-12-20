@@ -12,7 +12,7 @@ function FormularioCategoria() {
 
     // 1. Função definida ANTES de ser usada
     const carregarCategorias = () => {
-        axios.get('http://127.0.0.1:5000/categorias')
+        axios.get('https://icontas.onrender.com/categorias')
             .then(res => setLista(res.data))
             .catch(erro => console.error(erro)) // Aqui já estava ok
     }
@@ -29,7 +29,7 @@ function FormularioCategoria() {
 
         if (idEditando) {
             // Editar (PUT)
-            axios.put(`http://127.0.0.1:5000/categorias/${idEditando}`, dados)
+            axios.put(`https://icontas.onrender.com/categorias/${idEditando}`, dados)
                 .then(() => {
                     alert('Categoria atualizada!')
                     limparFormulario()
@@ -41,7 +41,7 @@ function FormularioCategoria() {
                 })
         } else {
             // Criar (POST)
-            axios.post('http://127.0.0.1:5000/categorias', dados)
+            axios.post('https://icontas.onrender.com/categorias', dados)
                 .then(() => {
                     alert('Categoria criada!')
                     limparFormulario()
@@ -56,7 +56,7 @@ function FormularioCategoria() {
 
     const excluir = (id) => {
         if (confirm("Tem certeza que deseja excluir esta categoria?")) {
-            axios.delete(`http://127.0.0.1:5000/categorias/${id}`)
+            axios.delete(`https://icontas.onrender.com/categorias/${id}`)
                 .then(() => {
                     carregarCategorias()
                 })

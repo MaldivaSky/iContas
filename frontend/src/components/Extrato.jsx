@@ -7,7 +7,7 @@ function Extrato() {
     const [filtro, setFiltro] = useState('todos') // 'todos', 'entrada', 'saida'
 
     useEffect(() => {
-        axios.get('http://127.0.0.1:5000/extrato')
+        axios.get('https://icontas.onrender.com/extrato')
             .then(res => setLista(res.data))
             .catch(erro => console.error(erro))
     }, [])

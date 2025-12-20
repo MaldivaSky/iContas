@@ -18,7 +18,7 @@ function RedefinirSenha() {
         }
 
         // Enviamos o token no cabeçalho (Authorization) para o backend validar
-        axios.post('http://127.0.0.1:5000/resetar-senha-token',
+        axios.post('https://icontas.onrender.com/resetar-senha-token',
             { nova_senha: novaSenha },
             { headers: { Authorization: 'Bearer ' + token } }
         )

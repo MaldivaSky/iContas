@@ -9,7 +9,7 @@ function AnaliseGrafica() {
     const [carregando, setCarregando] = useState(true)
 
     useEffect(() => {
-        axios.get('http://127.0.0.1:5000/dados-graficos')
+        axios.get('https://icontas.onrender.com/dados-graficos')
             .then(res => {
                 setDados(res.data)
                 setCarregando(false)
