@@ -1,0 +1,49 @@
+/* Configuração da Grade de Menu (2 colunas) */
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* Duas colunas iguais */
+    gap: 15px;
+    /* Espaço entre os cartões */
+    padding-bottom: 80px;
+}
+
+/* Estilo dos Cartões (Substituindo o estiloCard inline) */
+.card-menu {
+    background-color: rgb(191, 85, 244);
+    padding: 20px;
+    border-radius: 15px;
+    text-decoration: none;
+    /* Tira o sublinhado do link */
+    color: #333;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #eee;
+
+    /* A Mágica da Animação Suave */
+    transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
+/* EFEITO AO PASSAR O MOUSE (HOVER) */
+.card-menu:hover {
+    transform: translateY(-5px);
+    /* Sobe um pouquinho */
+    background-color: #060008;
+    color: #f7f7f7;
+    /* Fundo lilás bem clarinho */
+    border-color: #9c05b3;
+    /* Borda roxa */
+    cursor: pointer;
+}
+
+/* Ajuste para telas muito pequenas */
+@media (max-width: 350px) {
+    .menu-grid {
+        grid-template-columns: 1fr;
+        /* Uma coluna só se for celular muito pequeno */
+    }
+}

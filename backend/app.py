@@ -562,6 +562,25 @@ def atualizar_foto():
     return jsonify({"erro": "Arquivo inválido"}), 400
 
 
+# --- ROTA PARA ESPIAR OS DADOS ---
+@app.route("/admin/ver-usuarios")
+def ver_usuarios():
+    # Busca TODOS os usuários do banco
+    todos = User.query.all()
+
+    # Monta uma lista simples em HTML
+    html_resposta = "<h1>Lista de Usuários (Acesso Restrito)</h1>"
+    html_resposta += "<ul>"
+
+    for u in todos:
+        # Mostra ID, Nome e Email (ajuste os nomes dos campos se for diferente)
+        html_resposta += f"<li>ID: {u.id} | Nome: {u.nome} | Email: {u.email}</li>"
+
+    html_resposta += "</ul>"
+
+    return html_resposta
+
+
 if __name__ == "__main__":
     # host='0.0.0.0' libera o acesso para a rede Wi-Fi
     app.run(debug=True, host="0.0.0.0", port=5000)

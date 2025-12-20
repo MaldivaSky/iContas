@@ -46,7 +46,11 @@ function Login() {
     return (
         <div className="card-responsivo" style={{ maxWidth: '400px', marginTop: '50px' }}>
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <h1 style={{ color: '#070707ff', margin: 0 }}>iContas 🔐</h1>
+                <img
+                    src="/logo.png"
+                    alt="Logo iContas"
+                    style={{ width: '210px', height: 'auto' }}
+                />
                 <p style={{ color: '#ffffffff' }}>Entre para acessar suas finanças</p>
             </div>
 
