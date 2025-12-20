@@ -1,8 +1,7 @@
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 
 function MapaGastos({ pontos }) {
-    // Posição inicial padrão (Centro do Brasil) se não tiver pontos
-   
+       
     if (pontos.length === 0) {
         return <div style={{ height: '400px', background: '#0c0c0cff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Sem dados de GPS para exibir no mapa.</div>
     }
