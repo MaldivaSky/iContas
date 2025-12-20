@@ -5,8 +5,10 @@ from flask_cors import CORS
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask_mail import Mail, Message
+import csv 
+import io  
 
-
+# Mantenha os outros imports como estão (os, datetime, flask, etc...)
 # --- FERRAMENTAS DE SEGURANÇA (SENHA E ARQUIVO) ---
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -251,6 +253,60 @@ def obter_extrato():
 
     session.close()
     return jsonify(lista_combinada)
+
+
+# --- ROTA: EXPORTAR RELATÓRIO (CSV/EXCEL) ---
+@app.route("/exportar", methods=["GET"])
+def exportar_relatorio():
+    session = Session()
+
+    # 1. Busca os dados
+    entradas = session.query(Entrada).all()
+    saidas = session.query(Saida).all()
+    categorias = session.query(Categoria).all()
+
+    # Dicionário para trocar ID pelo Nome da Categoria
+    nome_cats = {c.id: c.principal for c in categorias}
+
+    # 2. Prepara o arquivo na memória (não salva no disco para não encher o servidor)
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # 3. Escreve o Cabeçalho (Títulos das colunas)
+    writer.writerow(["ID", "Data", "Tipo", "Descrição", "Categoria", "Valor", "Local"])
+
+    # 4. Escreve as Entradas
+    for e in entradas:
+        cat_nome = nome_cats.get(e.categoria_id, "Sem Categoria")
+        writer.writerow(
+            [e.id, e.data, "Entrada", e.descricao, cat_nome, e.valor, e.local]
+        )
+
+    # 5. Escreve as Saídas
+    for s in saidas:
+        cat_nome = nome_cats.get(s.categoria_id, "Sem Categoria")
+        # Colocamos o valor negativo (-) para ficar bonito no Excel
+        writer.writerow(
+            [s.id, s.data, "Saída", s.descricao, cat_nome, f"-{s.valor}", s.local]
+        )
+
+    # 6. Volta o "ponteiro" do arquivo para o começo
+    output.seek(0)
+
+    session.close()
+
+    # 7. Envia o arquivo para o usuário baixar
+    # Usamos io.BytesIO para converter o texto em bytes, que é o que o navegador espera
+    mem = io.BytesIO()
+    mem.write(output.getvalue().encode("utf-8"))
+    mem.seek(0)
+
+    return send_file(
+        mem,
+        as_attachment=True,
+        download_name="relatorio_icontas.csv",
+        mimetype="text/csv",
+    )
 
 
 # --- ROTA: DADOS PARA DASHBOARD (Mapas e Gráficos) ---
