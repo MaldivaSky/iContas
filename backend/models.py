@@ -10,7 +10,6 @@ class Categoria(Base):
     __tablename__ = "categorias"
     id = Column(Integer, primary_key=True)
     principal = Column(String, nullable=False)
-    tipo = Column(String, nullable=False)  # Ex: Entrada ou Saída
     estabelecimento = Column(String)  # Ex: Ifood, Uber (Opcional aqui, pode ser um padrão)
 
 

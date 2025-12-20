@@ -1,0 +1,27 @@
+entidades dos relacionamentos
+
+entradas
+- id
+- data
+- categoria 
+- valor
+- origem
+- descrição
+
+
+saídas
+- id
+- data
+- categoria
+- valor
+- origem
+- descrição
+
+categorias
+- id
+- principal
+- estabelecimento
+- local (dados localização)
+
+
+
