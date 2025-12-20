@@ -26,11 +26,35 @@ app = Flask(__name__)
 CORS(app)
 
 
-engine = create_engine("sqlite:///financeiro.db")
+# --- CONFIGURAÇÃO INTELIGENTE DO BANCO DE DADOS ---
+# 1. Procura se existe um link de banco de dados configurado (no Render tem, no seu PC não)
+db_url = os.environ.get("DATABASE_URL")
+
+if db_url:
+    # --- CENÁRIO: NUVEM (RENDER) ---
+    # O Render/Neon as vezes manda o link começando com "postgres://",
+    # mas o Python (SQLAlchemy) exige que seja "postgresql://"
+    # Essa linha faz a correção automática se precisar:
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+    # Cria a conexão com o Neon
+    engine = create_engine(db_url)
+    print("🚀 Conectado ao PostgreSQL na Nuvem (Neon)!")
+
+else:
+    # --- CENÁRIO: LOCAL (SEU COMPUTADOR) ---
+    # Se não achou link nenhum, usa o arquivo local como sempre
+    engine = create_engine("sqlite:///financeiro.db")
+    print("🏠 Conectado ao SQLite Local.")
+
+# Cria o fabricador de sessões
 Session = sessionmaker(bind=engine)
 
-app = Flask(__name__)
-CORS(app)
+# 2. IMPORTANTE: Cria as tabelas se elas não existirem
+# Como o banco do Neon vem vazio, essa linha obriga o Python a criar
+# as tabelas 'usuario', 'transacoes', etc, na primeira vez que rodar.
+Base.metadata.create_all(bind=engine)
 
 # ... Configurações de JWT e Upload (mantenha como estão) ...
 
