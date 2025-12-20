@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   // Se tiver a linha abaixo com ponto, CORRIJA:
   build: {
-    outDir: 'dist', // SEM O PONTO!
+    outDir: '.dist', // SEM O PONTO!
   }
 })
