@@ -64,8 +64,8 @@ function Extrato() {
             </div>
 
             {/* --- DASHBOARD (RESUMO) --- */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', textAlign: 'center' }}>
-                <div style={{ flex: 1, backgroundColor: '#080808ff', padding: '15px', borderRadius: '8px', color: '#ffffffff' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', textAlign: 'center', color: '#ffffffff' }}>
+                <div style={{ flex: 1, backgroundColor: '#121111ff', padding: '15px', borderRadius: '8px', color: '#ffffffff' }}>
                     <span style={{ color: '#0cea3fff' }}>Entradas</span>
                     <h3>R$ {totalEntradas.toFixed(2)}</h3>
                 </div>
