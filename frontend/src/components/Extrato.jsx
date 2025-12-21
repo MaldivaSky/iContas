@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import api from '../api'
 import { Link } from 'react-router-dom'
 
 function Extrato() {
@@ -29,6 +30,30 @@ function Extrato() {
         return item.tipo === filtro
     })
 
+    // Função para baixar o Excel
+    const baixarRelatorio = async () => {
+        try {
+            // Pede ao backend o arquivo (Note o responseType: 'blob')
+            const response = await api.get('/exportar', {
+                responseType: 'blob',
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            })
+
+            // Cria um link invisível para forçar o download no navegador
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'relatorio_icontas.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove(); // Limpa a bagunça
+
+        } catch (error) {
+            console.error("Erro ao baixar:", error);
+            alert("Erro ao baixar relatório. Tente novamente.");
+        }
+    }
+
     return (
         <div style={{ fontFamily: 'Arial', maxWidth: '800px', margin: '0 auto', padding: '10px' }}>
 
@@ -40,7 +65,7 @@ function Extrato() {
 
             {/* --- DASHBOARD (RESUMO) --- */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', textAlign: 'center' }}>
-                <div style={{ flex: 1, backgroundColor: '#080808ff', padding: '15px', borderRadius: '8px' }}>
+                <div style={{ flex: 1, backgroundColor: '#080808ff', padding: '15px', borderRadius: '8px', color: '#ffffffff' }}>
                     <span style={{ color: '#0cea3fff' }}>Entradas</span>
                     <h3>R$ {totalEntradas.toFixed(2)}</h3>
                 </div>
@@ -121,6 +146,29 @@ function Extrato() {
                     </p>
                 )}
             </ul>
+
+            {/* BOTÃO DE BAIXAR RELATÓRIO */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ color: '#820AD1', margin: 0 }}>Extrato</h2>
+
+                <button
+                    onClick={baixarRelatorio}
+                    style={{
+                        backgroundColor: '#28a745', // Verde Excel
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px 15px',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                    }}
+                >
+                    📥 Baixar Excel
+                </button>
+            </div>
         </div>
     )
 }
