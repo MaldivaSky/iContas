@@ -1,4 +1,5 @@
 import os
+import base64 
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -7,12 +8,10 @@ from sqlalchemy.orm import sessionmaker
 from flask_mail import Mail, Message
 import csv 
 import io  
-
 # Mantenha os outros imports como estão (os, datetime, flask, etc...)
 # --- FERRAMENTAS DE SEGURANÇA (SENHA E ARQUIVO) ---
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-
 # --- FERRAMENTAS DE TOKEN (JWT) - AQUI ESTAVA O ERRO ---
 from flask_jwt_extended import (
     JWTManager,
@@ -20,7 +19,6 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
 )
-
 # --- SEUS MODELOS (TABELAS) ---
 from models import Base, Categoria, Entrada, Saida, Usuario
 
@@ -385,12 +383,10 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# --- ROTA DE REGISTRO ATUALIZADA (Com Foto!) ---
 @app.route("/registro", methods=["POST"])
 def registrar():
     session = Session()
 
-    # Em upload de arquivo, os dados vêm em 'form', não 'json'
     nome_completo = request.form["nome_completo"]
     username = request.form["username"]
     email = request.form["email"]
@@ -407,14 +403,14 @@ def registrar():
         session.close()
         return jsonify({"erro": "Email ou Usuário já cadastrado!"}), 400
 
-    # Salva a foto (se tiver)
-    caminho_foto = None
-    if foto and allowed_file(foto.filename):
-        filename = secure_filename(
-            f"{username}_{foto.filename}"
-        )  # Evita nomes duplicados
-        foto.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        caminho_foto = filename  # Salva só o nome no banco
+    # --- NOVA LÓGICA DE FOTO (BASE64) ---
+    foto_dados = None
+    if foto:
+        # Lê o arquivo e transforma em código de texto
+        file_content = foto.read()
+        encoded_string = base64.b64encode(file_content).decode("utf-8")
+        # Cria o cabeçalho para o navegador entender (ex: data:image/png;base64,....)
+        foto_dados = f"data:{foto.mimetype};base64,{encoded_string}"
 
     senha_segura = generate_password_hash(senha)
 
@@ -424,7 +420,7 @@ def registrar():
         email=email,
         senha_hash=senha_segura,
         nascimento=datetime.strptime(nascimento, "%Y-%m-%d").date(),
-        foto_path=caminho_foto,
+        foto_path=foto_dados,  # <--- Salvamos o CÓDIGO DA FOTO, não o caminho
     )
 
     session.add(novo)
