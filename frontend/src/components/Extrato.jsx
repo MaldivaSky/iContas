@@ -60,7 +60,7 @@ function Extrato() {
             {/* CABEÇALHO COM BOTÃO VOLTAR */}
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
                 <Link to="/" style={{ textDecoration: 'none', fontSize: '24px', marginRight: '15px' }}>⬅</Link>
-                <h2 style={{ margin: 0 }}>Extrato Financeiro</h2>
+                <h2 style={{ margin: 0, color: '#ffffffff' }}>Extrato Financeiro</h2>
             </div>
 
             {/* --- DASHBOARD (RESUMO) --- */}
