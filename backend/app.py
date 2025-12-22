@@ -101,8 +101,8 @@ def registrar():
     session = Session()
     # Pega dados do formulário
     nome_completo = request.form["nome_completo"]
-    username = request.form["username"]
-    email = request.form["email"]
+    username=username.lower(), # <--- Força minúsculo
+    email=email.lower(),
     senha = request.form["senha"]
     nascimento = request.form["nascimento"]
     foto = request.files.get("foto")
@@ -125,8 +125,8 @@ def registrar():
 
     novo = Usuario(
         nome_completo=nome_completo,
-        username=username,
-        email=email,
+        username=username.lower(),  # <--- Força minúsculo
+        email=email.lower(),  # <--- Força minúsculo
         senha_hash=generate_password_hash(senha),
         nascimento=datetime.strptime(nascimento, "%Y-%m-%d").date(),
         foto_path=foto_dados,  # Salva o código da imagem aqui
@@ -143,11 +143,12 @@ def login():
     session = Session()
     dados = request.json
 
+    login_input = dados["login"].lower()  # <--- Transforma o que a pessoa digitou
     # Busca por email OU username
     usuario = (
         session.query(Usuario)
         .filter(
-            (Usuario.email == dados["login"]) | (Usuario.username == dados["login"])
+            (Usuario.email == login_input) | (Usuario.username == login_input)
         )
         .first()
     )
@@ -512,6 +513,25 @@ def esqueci_senha():
     # ... (Mantenha a lógica de enviar email aqui se desejar, ou copie do seu arquivo anterior)
     # Para economizar espaço, se não estiver usando agora, pode deixar simples:
     return jsonify({"msg": "Funcionalidade em manutenção"}), 503
+
+
+@app.route("/debug/usuarios", methods=["GET"])
+def debug_usuarios():
+    session = Session()
+    users = session.query(Usuario).all()
+    lista = []
+    for u in users:
+        lista.append(
+            {
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "senha_hash_preview": u.senha_hash[:10]
+                + "...",  # Só o começo pra confirmar que é hash
+            }
+        )
+    session.close()
+    return jsonify(lista)
 
 
 # Iniciar App
