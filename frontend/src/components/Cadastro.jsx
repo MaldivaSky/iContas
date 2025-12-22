@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import { useNavigate, Link } from 'react-router-dom'
 
 function Cadastro() {
@@ -39,7 +39,7 @@ function Cadastro() {
             formData.append('foto', foto)
         }
 
-        axios.post('https://icontas.onrender.com/registro', formData, {
+        api.post('/registro', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data' // Avisa o Python que tem arquivo indo
             }

@@ -99,7 +99,7 @@ function Login() {
             </form>
 
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                <Link to="/cadastro" style={{ fontWeight: 'bold', color: '#820AD1' }}>
+                <Link to="/cadastro" style={{ fontWeight: 'bold', color: '#090909ff' }}>
                     CRIAR CONTA GRÁTIS
                 </Link>
             </div>

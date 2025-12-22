@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import { Link } from 'react-router-dom'
 import MapaGastos from './MapaGastos'
 import GraficoPizza from './GraficoPizza'
+import api from '../api'
 
 function AnaliseGrafica() {
     const [dados, setDados] = useState(null)
     const [carregando, setCarregando] = useState(true)
 
     useEffect(() => {
-        axios.get('https://icontas.onrender.com/dados-graficos')
+        api.get('/dados-graficos')
             .then(res => {
                 setDados(res.data)
                 setCarregando(false)

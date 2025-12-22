@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api'
 
 function FormularioCategoria() {
     const [principal, setPrincipal] = useState('')
@@ -12,12 +12,11 @@ function FormularioCategoria() {
 
     // 1. Função definida ANTES de ser usada
     const carregarCategorias = () => {
-        axios.get('https://icontas.onrender.com/categorias')
+        api.get('/categorias')
             .then(res => setLista(res.data))
-            .catch(erro => console.error(erro)) // Aqui já estava ok
+            .catch(erro => console.error("Erro ao ler categorias", erro))
     }
 
-    // 2. useEffect chamando a função
     useEffect(() => {
         carregarCategorias()
     }, [])
@@ -29,26 +28,26 @@ function FormularioCategoria() {
 
         if (idEditando) {
             // Editar (PUT)
-            axios.put(`https://icontas.onrender.com/categorias/${idEditando}`, dados)
+            api.put(`/categorias/${idEditando}`, dados)
                 .then(() => {
                     alert('Categoria atualizada!')
                     limparFormulario()
                     carregarCategorias()
                 })
                 .catch(erro => {
-                    console.error(erro) // <--- CORREÇÃO: Usando a variável erro
+                    console.error(erro)
                     alert('Erro ao atualizar. Veja o console para detalhes.')
                 })
         } else {
             // Criar (POST)
-            axios.post('https://icontas.onrender.com/categorias', dados)
+            api.post('/categorias', dados)
                 .then(() => {
                     alert('Categoria criada!')
                     limparFormulario()
                     carregarCategorias()
                 })
                 .catch(erro => {
-                    console.error(erro) // <--- CORREÇÃO: Usando a variável erro
+                    console.error(erro)
                     alert('Erro ao criar. Veja o console para detalhes.')
                 })
         }
@@ -56,12 +55,12 @@ function FormularioCategoria() {
 
     const excluir = (id) => {
         if (confirm("Tem certeza que deseja excluir esta categoria?")) {
-            axios.delete(`https://icontas.onrender.com/categorias/${id}`)
+            api.delete(`/categorias/${id}`)
                 .then(() => {
                     carregarCategorias()
                 })
                 .catch(erro => {
-                    console.error(erro) // <--- CORREÇÃO: Usando a variável erro
+                    console.error(erro)
                     alert('Erro ao excluir. Talvez ela esteja em uso.')
                 })
         }

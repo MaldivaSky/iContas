@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api' // <--- AQUI ESTÁ A MÁGICA (Mudamos de axios para api)
 
 function FormularioTransacao() {
     const [tipo, setTipo] = useState('saida')
@@ -7,20 +7,23 @@ function FormularioTransacao() {
     const [data, setData] = useState('')
     const [descricao, setDescricao] = useState('')
     const [origem, setOrigem] = useState('')
-    const [local, setLocal] = useState('') // <--- Estado para guardar o GPS
+    const [local, setLocal] = useState('')
     const [categoriaId, setCategoriaId] = useState('')
     const [listaCategorias, setListaCategorias] = useState([])
 
     useEffect(() => {
-        axios.get('https://icontas.onrender.com/categorias')
+        // Agora usamos 'api.get' e não precisamos do link completo
+        api.get('/categorias')
             .then(res => {
                 setListaCategorias(res.data)
                 if (res.data.length > 0) setCategoriaId(res.data[0].id)
             })
-            .catch(erro => console.error(erro))
+            .catch(erro => {
+                console.error("Erro ao buscar categorias:", erro)
+                alert("Não foi possível carregar as categorias.")
+            })
     }, [])
 
-    // Função para pegar GPS (Movemos para cá!)
     const pegarGPS = (e) => {
         e.preventDefault()
         if (navigator.geolocation) {
@@ -35,21 +38,25 @@ function FormularioTransacao() {
 
     const salvarTransacao = (e) => {
         e.preventDefault()
-        const url = tipo === 'entrada' ? 'https://icontas.onrender.com/entradas' : 'https://icontas.onrender.com/saidas'
+        // URL curta, o api.js sabe o resto
+        const url = tipo === 'entrada' ? '/entradas' : '/saidas'
 
-        axios.post(url, {
+        api.post(url, {
             valor: parseFloat(valor),
             data,
             descricao,
             origem,
-            local, // <--- Enviando o GPS
+            local,
             categoria_id: categoriaId
         })
             .then(() => {
                 alert('Salvo com sucesso!')
                 setValor(''); setDescricao(''); setLocal('')
             })
-            .catch(erro => console.error(erro))
+            .catch(erro => {
+                console.error(erro)
+                alert("Erro ao salvar transação.")
+            })
     }
 
     return (
@@ -57,7 +64,6 @@ function FormularioTransacao() {
             <h2 style={{ marginTop: 0 }}>Lançar Movimentação {tipo === 'entrada' ? 'Entrada' : 'Saída'}</h2>
             <form onSubmit={salvarTransacao}>
 
-                {/* Escolha do Tipo */}
                 <div style={{ marginBottom: '15px', display: 'flex', gap: '20px', justifyContent: 'center' }}>
                     <label><input type="radio" name="tipo" value="entrada" checked={tipo === 'entrada'} onChange={() => setTipo('entrada')} /> Entrada</label>
                     <label><input type="radio" name="tipo" value="saida" checked={tipo === 'saida'} onChange={() => setTipo('saida')} /> Saída</label>
@@ -68,7 +74,6 @@ function FormularioTransacao() {
                 <input type="text" placeholder="Descrição" value={descricao} onChange={e => setDescricao(e.target.value)} style={{ width: '90%', padding: '10px', marginBottom: '10px' }} />
                 <input type="text" placeholder="Origem (Banco, Carteira)" value={origem} onChange={e => setOrigem(e.target.value)} style={{ width: '90%', padding: '10px', marginBottom: '10px' }} />
 
-                {/* CAMPO DE LOCALIZAÇÃO NOVO */}
                 <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
                     <input type="text" placeholder="Localização" value={local} onChange={e => setLocal(e.target.value)} style={{ flex: 1, padding: '10px' }} />
                     <button type="button" onClick={pegarGPS} style={{ cursor: 'pointer' }}>📍</button>
