@@ -1,57 +1,56 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Date
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import create_engine, Column, Integer, String, Date, Float, ForeignKey
+from sqlalchemy.orm import declarative_base, relationship  # <--- CORREÇÃO AQUI
+from sqlalchemy.sql import func
 
-engine = create_engine("sqlite:///financeiro.db")
 Base = declarative_base()
 
 
-# 1. Categoria
+class Usuario(Base):
+    __tablename__ = "usuario"
+    id = Column(Integer, primary_key=True)
+    nome_completo = Column(String)
+    username = Column(String, unique=True)
+    email = Column(String, unique=True)
+    senha_hash = Column(String)
+    nascimento = Column(Date)
+    foto_path = Column(String)  # Armazena o Base64 da foto
+
+
 class Categoria(Base):
     __tablename__ = "categorias"
     id = Column(Integer, primary_key=True)
-    principal = Column(String, nullable=False)
-    estabelecimento = Column(String)  # Ex: Ifood, Uber (Opcional aqui, pode ser um padrão)
+    principal = Column(String)
+    estabelecimento = Column(String)
+    # Agora a categoria tem dono obrigatório
+    usuario_id = Column(Integer, ForeignKey("usuario.id"))
+    usuario = relationship("Usuario")
 
 
-# 2. Entradas
 class Entrada(Base):
     __tablename__ = "entradas"
     id = Column(Integer, primary_key=True)
-    usuario_id = Column(Integer, ForeignKey("usuario.id"))
-    data = Column(Date, nullable=False)
-    valor = Column(Float, nullable=False)
+    data = Column(Date)
+    valor = Column(Float)
     origem = Column(String)
     descricao = Column(String)
-    local = Column(String)  # <--- NOVO CAMPO AQUI
+    local = Column(String)
     categoria_id = Column(Integer, ForeignKey("categorias.id"))
-    #usuario = relationship("Usuario")
+    usuario_id = Column(Integer, ForeignKey("usuario.id"))
+    
+    usuario = relationship("Usuario")
+    categoria = relationship("Categoria")
 
 
-# 3. Saídas
 class Saida(Base):
     __tablename__ = "saidas"
     id = Column(Integer, primary_key=True)
-    data = Column(Date, nullable=False)
-    valor = Column(Float, nullable=False)
+    data = Column(Date)
+    valor = Column(Float)
     origem = Column(String)
     descricao = Column(String)
-    local = Column(String)  # <--- NOVO CAMPO AQUI
+    local = Column(String)
     categoria_id = Column(Integer, ForeignKey("categorias.id"))
     usuario_id = Column(Integer, ForeignKey("usuario.id"))
-    #usuario = relationship("Usuario")
 
-
-class Usuario(Base):
-    __tablename__ = "usuarios"
-    id = Column(Integer, primary_key=True)
-    nome_completo = Column(String, nullable=False)
-    username = Column(String, unique=True, nullable=False)
-    email = Column(String, unique=True, nullable=False)
-    senha_hash = Column(String, nullable=False)
-    nascimento = Column(Date)
-    foto_path = Column(String)
-    codigo_reset = Column(String, nullable=True)
-
-
-Base.metadata.create_all(engine)
-print("Banco atualizado: GPS agora fica nas Entradas e Saídas!")
+    usuario = relationship("Usuario")
+    categoria = relationship("Categoria")
