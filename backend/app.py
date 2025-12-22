@@ -50,15 +50,27 @@ Base.metadata.create_all(bind=engine)
 # ==============================================================================
 # 📧 2. CONFIGURAÇÕES DE EMAIL E JWT
 # ==============================================================================
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 465
-app.config["MAIL_USERNAME"] = "[REDACTED_EMAIL]"
-app.config["MAIL_PASSWORD"] = "[REDACTED_SMTP_PASSWORD]"  # Sua senha de app
-app.config["MAIL_USE_TLS"] = False
-app.config["MAIL_USE_SSL"] = True
+"""
+Configuração de email e JWT via variáveis de ambiente.
+
+IMPORTANTE:
+- Não coloque credenciais diretamente no código.
+- Defina as variáveis em `backend/.env` (não comitar) ou no ambiente do servidor.
+"""
+
+# Mail settings (lê de variáveis de ambiente, com valores padrão para servidor/porta)
+app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", 465))
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
+# Use strings "True"/"False" nas variáveis se quiser sobrescrever
+app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "False").lower() in ("true", "1", "yes")
+app.config["MAIL_USE_SSL"] = os.environ.get("MAIL_USE_SSL", "True").lower() in ("true", "1", "yes")
 mail = Mail(app)
 
-app.config["JWT_SECRET_KEY"] = "[REDACTED_JWT_SECRET]"
+# JWT secret (recomenda-se definir em ambiente de produção)
+# Se não definido, gera um secret temporário (apenas para desenvolvimento local)
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY") or os.urandom(24).hex()
 jwt = JWTManager(app)
 
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)

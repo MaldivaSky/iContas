@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import { Link } from 'react-router-dom'
 
 function EsqueciSenha() {
@@ -10,7 +10,7 @@ function EsqueciSenha() {
         e.preventDefault()
         setLoading(true)
 
-        axios.post('https://icontas.onrender.com/esqueci-senha', { email })
+        api.post('/esqueci-senha', { email })
             .then(() => {
                 alert('Boa! Verifique seu e-mail (e a caixa de spam). O link dura 15 minutos.')
                 setEmail('')

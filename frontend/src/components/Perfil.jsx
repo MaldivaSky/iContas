@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api'
 import { Link, useNavigate } from 'react-router-dom'
 
 function Perfil() {
@@ -20,9 +20,7 @@ function Perfil() {
             return
         }
 
-        axios.get('https://icontas.onrender.com/meus-dados', {
-            headers: { Authorization: 'Bearer ' + token }
-        })
+        api.get('/meus-dados')
             .then(res => {
                 setDados(res.data)
                 setLoading(false)
@@ -55,9 +53,8 @@ function Perfil() {
         formData.append('foto', arquivo)
         const token = localStorage.getItem('token')
 
-        axios.post('https://icontas.onrender.com/atualizar-foto', formData, {
+        api.post('/atualizar-foto', formData, {
             headers: {
-                Authorization: 'Bearer ' + token,
                 'Content-Type': 'multipart/form-data'
             }
         })

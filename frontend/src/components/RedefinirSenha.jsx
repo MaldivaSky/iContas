@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import { useParams, useNavigate } from 'react-router-dom' // useParams pega o token da URL
 
 function RedefinirSenha() {
@@ -18,7 +18,7 @@ function RedefinirSenha() {
         }
 
         // Enviamos o token no cabeçalho (Authorization) para o backend validar
-        axios.post('https://icontas.onrender.com/resetar-senha-token',
+        api.post('/resetar-senha-token',
             { nova_senha: novaSenha },
             { headers: { Authorization: 'Bearer ' + token } }
         )

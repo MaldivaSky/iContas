@@ -3,10 +3,10 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import 'leaflet/dist/leaflet.css'
-import axios from 'axios' // <--- Importe o axios
+import api from './api'
 
 // --- O EXTERMINADOR DE TOKENS VELHOS ---
-axios.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response, // Se der certo, segue a vida
   (error) => {
     // Se o erro for 401 (Não autorizado) ou 422 (Token inválido/processamento)

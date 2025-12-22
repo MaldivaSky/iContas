@@ -70,7 +70,7 @@ function Navbar() {
 
 const styles = {
     container: {
-        backgroundColor: '#820AD1', // Roxo Nubank
+        backgroundColor: '#6a0596ff', // Roxo Nubank
         height: '70px',
         display: 'flex',
         justifyContent: 'space-between',
