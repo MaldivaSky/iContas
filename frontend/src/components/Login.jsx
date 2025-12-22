@@ -1,57 +1,64 @@
 import { useState } from 'react'
-import axios from 'axios'
-import {  Link } from 'react-router-dom'
+import api from '../api' 
+import { Link, useNavigate } from 'react-router-dom' // useNavigate é mais moderno
 
 function Login() {
-    
-    // O login pode ser tanto o email quanto o username
     const [login, setLogin] = useState('')
     const [senha, setSenha] = useState('')
+    const [loading, setLoading] = useState(false) // Para desabilitar o botão enquanto carrega
+    const navigate = useNavigate()
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault()
+        setLoading(true)
 
-        axios.post('https://icontas.onrender.com/login', {
-            login: login,
-            senha: senha
-        })
-            .then(res => {
-                // O Python respondeu com sucesso!
-                const dados = res.data
+        try {
+            // Usa 'api' em vez de 'axios' direto
+            const resposta = await api.post('/login', {
+                login: login.trim(), // Remove espaços acidentais
+                senha: senha
+            })
 
-                // 1. Salva o Token (o crachá de segurança)
-                localStorage.setItem('token', dados.token)
+            const dados = resposta.data
 
-                // 2. Salva os dados para mostrar na Navbar
-                localStorage.setItem('usuario_nome', dados.nome)
+            // Salva tudo
+            localStorage.setItem('token', dados.token)
+            localStorage.setItem('usuario_nome', dados.nome)
+            if (dados.foto) {
+                localStorage.setItem('usuario_foto', dados.foto)
+            } else {
+                localStorage.removeItem('usuario_foto')
+            }
 
-                // Se tiver foto, salva. Se não, salva 'null'
-                if (dados.foto) {
-                    localStorage.setItem('usuario_foto', dados.foto)
+            // Redireciona
+            navigate('/')
+            window.location.reload() // Garante que a Navbar atualize
+
+        } catch (error) {
+            console.error("Erro no login:", error)
+
+            // Tratamento de erro detalhado
+            if (error.response) {
+                if (error.response.status === 401) {
+                    alert("Usuário ou senha incorretos! Tente novamente.")
+                } else if (error.response.status === 500) {
+                    alert("Erro no Servidor! O banco de dados pode estar desconectado.")
                 } else {
-                    localStorage.removeItem('usuario_foto')
+                    alert(`Erro desconhecido: ${error.response.status}`)
                 }
-
-                // 3. Redireciona para a Home
-                // O comando window.location.href força a página a recarregar
-                // Isso é necessário para a Navbar perceber que o usuário logou
-                window.location.href = "/"
-            })
-            .catch(erro => {
-                console.error(erro)
-                alert("Login incorreto! Verifique seus dados.")
-            })
+            } else {
+                alert("Erro de conexão. Verifique sua internet.")
+            }
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
         <div className="card-responsivo" style={{ maxWidth: '400px', marginTop: '50px' }}>
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <img
-                    src="/logo.png"
-                    alt="Logo iContas"
-                    style={{ width: '210px', height: 'auto' }}
-                />
-                <p style={{ color: '#ffffffff' }}>Entre para acessar suas finanças</p>
+                <img src="/logo.png" alt="Logo" style={{ width: '210px', height: 'auto' }} />
+                <p style={{ color: '#666' }}>Entre para acessar suas finanças</p>
             </div>
 
             <form onSubmit={handleLogin} autoComplete="off">
@@ -63,8 +70,7 @@ function Login() {
                         onChange={e => setLogin(e.target.value)}
                         required
                         placeholder="Digite seu login..."
-                        autoComplete="off"
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', padding: '10px' }}
                     />
                 </div>
 
@@ -76,29 +82,31 @@ function Login() {
                         onChange={e => setSenha(e.target.value)}
                         required
                         placeholder="Sua senha secreta"
-                        style={{ width: '100%' }}
-                        autoComplete="off"
+                        style={{ width: '100%', padding: '10px' }}
                     />
                 </div>
 
-                <div style={{ textAlign: 'right', marginBottom: '10px' }}>
-                    <Link to="/esqueci-senha" style={{ fontSize: '18px', color: '#000000ff', textDecoration: 'none' }}>
-                        Esqueci minha senha
-                    </Link>
-                </div>
-
-                <button type="submit" style={{ width: '100%', backgroundColor: '#0dc325ff', color: 'white', border: 'none' }}>
-                    ENTRAR
+                <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                        width: '100%',
+                        backgroundColor: '#0dc325',
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        opacity: loading ? 0.7 : 1
+                    }}>
+                    {loading ? 'Entrando...' : 'ENTRAR'}
                 </button>
             </form>
 
-            <div style={{ textAlign: 'center', marginTop: '20px', borderTop: '1px solid #000000ff', paddingTop: '15px' }}>
-                <p style={{ fontSize: '14px', color: '#f6f6f6ff' }}>Ainda não tem conta?</p>
-                <Link to="/cadastro" style={{ textDecoration: 'none', fontWeight: 'bold', color: '#000000ff' }}>
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <Link to="/cadastro" style={{ fontWeight: 'bold', color: '#820AD1' }}>
                     CRIAR CONTA GRÁTIS
                 </Link>
             </div>
-
         </div>
     )
 }
