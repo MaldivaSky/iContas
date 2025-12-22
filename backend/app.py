@@ -61,6 +61,8 @@ mail = Mail(app)
 app.config["JWT_SECRET_KEY"] = "[REDACTED_JWT_SECRET]"
 jwt = JWTManager(app)
 
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
+
 # Configuração de Upload (Usaremos apenas para ler o arquivo temporariamente)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
