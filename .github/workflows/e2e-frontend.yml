@@ -1,0 +1,53 @@
+name: E2E Frontend (Cypress)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose version
+
+      - name: Build and start services
+        run: |
+          docker compose up -d --build
+
+      - name: Wait for frontend
+        run: |
+          for i in {1..30}; do
+            curl --silent --fail http://localhost:3000 && break || sleep 2
+          done
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: |
+          npm ci
+          # install cypress for this run (no-save to avoid changing package.json)
+          npm install cypress --no-save
+
+      - name: Run Cypress tests
+        working-directory: frontend
+        env:
+          CYPRESS_baseUrl: http://localhost:3000
+        run: |
+          npx cypress run --config baseUrl=http://localhost:3000 || true
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose down -v

@@ -21,14 +21,20 @@ function Calculadora() {
     // Função que faz a conta (o cérebro da calculadora)
     const calcular = () => {
         try {
-            // O 'eval' do JavaScript resolve contas matemáticas de texto (ex: "2+2")
-            // Nota: Em projetos profissionais grandes, evitamos eval por segurança, 
-            // mas para uma calculadora simples fechada, funciona perfeitamente.
-            const total = eval(visor).toString()
-            setResultado(total)
-            setVisor(total) // Atualiza o visor com o resultado para continuar a conta
-        } catch (erro) {
-            setResultado("Erro")
+            // Sanitiza o conteúdo do visor para permitir apenas caracteres
+            // numéricos, operadores básicos, parênteses, ponto e espaços.
+            const sanitized = (visor || '').replace(/[^0-9+\-*/(). ]+/g, '')
+            if (!sanitized || /[+\-*/.]$/.test(sanitized.trim())) {
+                throw new Error('Expressão inválida')
+            }
+            // Avaliador simples e restrito usando Function (mais seguro que eval cru).
+            const total = Function(`"use strict"; return (${sanitized})`)()
+            const totalStr = String(total)
+            setResultado(totalStr)
+            setVisor(totalStr)
+        } catch (e) {
+            console.error(e)
+            setResultado('Erro')
         }
     }
 

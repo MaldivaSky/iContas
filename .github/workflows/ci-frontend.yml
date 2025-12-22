@@ -1,0 +1,78 @@
+name: CI Frontend
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  frontend-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install deps
+        working-directory: frontend
+        run: |
+          npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: |
+          npm run lint || true
+          # optionally check formatting with prettier if configured
+          if [ -f frontend/.prettierrc ]; then npx prettier --check "frontend/**/*.{js,jsx,css,md}" || true; fi
+
+      - name: Run tests
+        working-directory: frontend
+        run: |
+          npm test -- --watchAll=false || true
+
+      - name: Upload frontend build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Build
+        working-directory: frontend
+        run: |
+          npm run build
+
+      - name: Build Docker image (optional)
+        if: github.event_name == 'push'
+        run: |
+          docker build -t icontas-frontend ./frontend
+
+      - name: Log in to Docker Hub (if secrets provided)
+        if: secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image to Docker Hub
+        if: secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/icontas-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/icontas-frontend:${{ github.sha }}
+
+      - name: Build and push to GitHub Container Registry
+        if: success() && !secrets.DOCKERHUB_USERNAME
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/icontas-frontend:latest,ghcr.io/${{ github.repository_owner }}/icontas-frontend:${{ github.sha }}

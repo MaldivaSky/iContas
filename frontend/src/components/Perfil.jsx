@@ -51,7 +51,6 @@ function Perfil() {
 
         const formData = new FormData()
         formData.append('foto', arquivo)
-        const token = localStorage.getItem('token')
 
         api.post('/atualizar-foto', formData, {
             headers: {

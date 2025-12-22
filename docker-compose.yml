@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    container_name: icontas-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: icontas-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+# Se quiser adicionar um serviço de DB (Postgres) futuramente, descomente e configure
+#  db:
+#    image: postgres:15
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
+#      - POSTGRES_DB=icontas
+#    volumes:
+#      - db-data:/var/lib/postgresql/data
+#
+#volumes:
+#  db-data:
+#    external: false
