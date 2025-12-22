@@ -17,12 +17,14 @@ class Categoria(Base):
 class Entrada(Base):
     __tablename__ = "entradas"
     id = Column(Integer, primary_key=True)
+    usuario_id = Column(Integer, ForeignKey("usuario.id"))
     data = Column(Date, nullable=False)
     valor = Column(Float, nullable=False)
     origem = Column(String)
     descricao = Column(String)
     local = Column(String)  # <--- NOVO CAMPO AQUI
     categoria_id = Column(Integer, ForeignKey("categorias.id"))
+    #usuario = relationship("Usuario")
 
 
 # 3. Saídas
@@ -35,6 +37,8 @@ class Saida(Base):
     descricao = Column(String)
     local = Column(String)  # <--- NOVO CAMPO AQUI
     categoria_id = Column(Integer, ForeignKey("categorias.id"))
+    usuario_id = Column(Integer, ForeignKey("usuario.id"))
+    #usuario = relationship("Usuario")
 
 
 class Usuario(Base):

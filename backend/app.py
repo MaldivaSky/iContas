@@ -121,28 +121,32 @@ def listar_categorias():
     return jsonify(res)
 
 
-# --- ENTRADAS (Com Local) ---
 @app.route("/entradas", methods=["POST"])
+@jwt_required()  # <--- BLOQUEIA QUEM NÃO ESTÁ LOGADO
 def criar_entrada():
+    usuario_id = get_jwt_identity()  # <--- PEGA O ID DE QUEM TÁ LOGADO
     session = Session()
     d = request.json
+
     nova = Entrada(
         data=datetime.strptime(d["data"], "%Y-%m-%d").date(),
         valor=d["valor"],
         origem=d.get("origem"),
         descricao=d.get("descricao"),
         categoria_id=d.get("categoria_id"),
-        local=d.get("local"),  # <--- Recebendo GPS
+        local=d.get("local"),
+        usuario_id=usuario_id,  # <--- SALVA O DONO DA CONTA
     )
     session.add(nova)
     session.commit()
     session.close()
-    return jsonify({"msg": "Entrada salva com local!"}), 201
+    return jsonify({"msg": "Entrada salva!"}), 201
 
 
 # --- SAÍDAS (Com Local) ---
 @app.route("/saidas", methods=["POST"])
 def criar_saida():
+    usuario_id = get_jwt_identity()  # <--- PEGA O ID DE QUEM TÁ LOGADO
     session = Session()
     d = request.json
     nova = Saida(
@@ -152,6 +156,7 @@ def criar_saida():
         descricao=d.get("descricao"),
         categoria_id=d.get("categoria_id"),
         local=d.get("local"),  # <--- Recebendo GPS
+        usuario_id=usuario_id,  # <--- SALVA O DONO DA CONTA
     )
     session.add(nova)
     session.commit()
@@ -164,11 +169,12 @@ def criar_saida():
 # --- ROTA: ATUALIZAR CATEGORIA (PUT) ---
 @app.route("/categorias/<int:id>", methods=["PUT"])
 def atualizar_categoria(id):
+    usuario_id = get_jwt_identity()
     session = Session()
     dados = request.json
 
     # Busca a categoria pelo ID
-    categoria = session.query(Categoria).get(id)
+    categoria = session.query(Categoria).filter_by(usuario_id=usuario_id).all()
 
     if categoria:
         categoria.principal = dados["principal"]
@@ -184,10 +190,11 @@ def atualizar_categoria(id):
 # --- ROTA: DELETAR CATEGORIA (DELETE) ---
 @app.route("/categorias/<int:id>", methods=["DELETE"])
 def deletar_categoria(id):
+    usuario_id = get_jwt_identity()  # <--- Descobre quem é você
     session = Session()
 
     # Busca e deleta
-    categoria = session.query(Categoria).get(id)
+    categoria = session.query(Categoria).filter_by(usuario_id=usuario_id).all()
 
     if categoria:
         session.delete(categoria)
@@ -202,15 +209,15 @@ def deletar_categoria(id):
 # --- ROTA: EXTRATO COMBINADO (O Cérebro do Dashboard) ---
 @app.route("/extrato", methods=["GET"])
 def obter_extrato():
+    usuario_id = get_jwt_identity()  # <--- Descobre quem é você
     session = Session()
 
-    # 1. Buscar tudo
-    entradas = session.query(Entrada).all()
-    saidas = session.query(Saida).all()
+    entradas = session.query(Entrada).filter_by(usuario_id=usuario_id).all()
+    saidas = session.query(Saida).filter_by(usuario_id=usuario_id).all()
 
     # 2. Buscar nomes das categorias (para não mostrar só números IDs)
     # Cria um dicionário: { 1: "Alimentação", 2: "Transporte" }
-    cats = session.query(Categoria).all()
+    cats = session.query(Categoria).filter_by(usuario_id=usuario_id).all()
     nome_categorias = {c.id: c.principal for c in cats}
 
     lista_combinada = []
@@ -256,12 +263,13 @@ def obter_extrato():
 # --- ROTA: EXPORTAR RELATÓRIO (CSV/EXCEL) ---
 @app.route("/exportar", methods=["GET"])
 def exportar_relatorio():
+    usuario_id = get_jwt_identity()  # <--- Descobre quem é você
     session = Session()
 
     # 1. Busca os dados
-    entradas = session.query(Entrada).all()
-    saidas = session.query(Saida).all()
-    categorias = session.query(Categoria).all()
+    entradas = session.query(Entrada).filter_by(usuario_id=usuario_id).all()
+    saidas = session.query(Saida).filter_by(usuario_id=usuario_id).all()
+    categorias = session.query(Categoria).filter(usuario_id=usuario_id).all()
 
     # Dicionário para trocar ID pelo Nome da Categoria
     nome_cats = {c.id: c.principal for c in categorias}
@@ -310,11 +318,12 @@ def exportar_relatorio():
 # --- ROTA: DADOS PARA DASHBOARD (Mapas e Gráficos) ---
 @app.route("/dados-graficos", methods=["GET"])
 def dados_graficos():
+    usuario_id = get_jwt_identity()  # <--- Descobre quem é você
     session = Session()
 
-    entradas = session.query(Entrada).all()
-    saidas = session.query(Saida).all()
-    cats = session.query(Categoria).all()
+    entradas = session.query(Entrada).filter_by(usuario_id=usuario_id).all()
+    saidas = session.query(Saida).filter_by(usuario_id=usuario_id).all()
+    cats = session.query(Categoria).filter_by(usuario_id=usuario_id).all()
     nome_cats = {c.id: c.principal for c in cats}  # Dicionário {id: "Nome"}
 
     # --- PREPARAÇÃO 1: DADOS DO MAPA (Pontos com GPS) ---
