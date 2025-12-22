@@ -5,14 +5,9 @@ function RotaProtegida({ children }) {
 
     // 1. Verifica se existe o crachá no navegador
     const token = localStorage.getItem('token')
-
-    // 2. Se NÃO tiver token, manda para o Login imediatamente
-    if (!token) {
-        return <Navigate to="/login" replace />
-    }
-
-    // 3. Se tiver token, libera o acesso à página filha
-    return children
+    console.log("🔒 RotaProtegida: Verificando token...", token ? "OK" : "VAZIO");
+    // 2. Se tiver token, deixa entrar. Se não, manda pro Login.
+    return token ? children : <Navigate to="/login" />;
 }
 
 export default RotaProtegida

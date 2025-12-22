@@ -26,7 +26,7 @@ from flask_jwt_extended import (
 from models import Base, Categoria, Entrada, Saida, Usuario
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ==============================================================================
 # ⚙️ 1. CONFIGURAÇÃO DO BANCO DE DADOS (LOCAL vs NUVEM)

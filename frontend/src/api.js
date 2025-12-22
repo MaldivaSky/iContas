@@ -14,28 +14,23 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// --- 2. O QUE VOLTA (RESPONSE) - AQUI ESTÁ A CORREÇÃO ---
-// Verifica se o servidor devolveu erro de "Token Inválido"
+// --- 2. O QUE VOLTA (RESPONSE) ---
 api.interceptors.response.use(
     (response) => {
-        // Se deu tudo certo, só repassa a resposta
         return response;
     },
     (error) => {
         // Se o erro for 401 (Não Autorizado) ou 422 (Token Estranho)
         if (error.response && (error.response.status === 401 || error.response.status === 422)) {
-            console.log("Sessão expirada ou inválida. Fazendo logout...");
+            console.log("⚠️ Erro de Sessão detectado:", error.response); // Apenas avisa no console
 
-            // Limpa a sujeira
-            localStorage.removeItem("token");
-            localStorage.removeItem("usuario_nome");
-            localStorage.removeItem("usuario_foto");
-
-            // Redireciona para o login (força bruta para garantir)
-            window.location.href = "/login";
+            // 🚨 COMENTE ESTAS LINHAS (Coloque // na frente)
+            // console.log("Sessão expirada ou inválida. Fazendo logout...");
+            // localStorage.removeItem("token");
+            // localStorage.removeItem("usuario_nome");
+            // window.location.href = "/login";
         }
 
-        // Repassa o erro para o componente mostrar aviso se quiser
         return Promise.reject(error);
     }
 );
