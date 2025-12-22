@@ -73,3 +73,68 @@ select {
   gap: 15px;
   padding: 15px;
 }
+
+/* --- TELA DE CARREGAMENTO (LOADING) --- */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Ocupa a altura total da tela */
+  width: 100%;
+  background-color: #f8f9fa;
+  /* Fundo clarinho */
+  position: fixed;
+  /* Fica por cima de tudo */
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+.spinner {
+  border: 6px solid #e0e0e0;
+  /* Cinza claro */
+  border-top: 6px solid #820AD1;
+  /* ROXO DO SEU APP */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: girar 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.loading-text {
+  color: #820AD1;
+  font-weight: bold;
+  font-family: sans-serif;
+  animation: piscar 1.5s infinite;
+}
+
+@keyframes girar {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes piscar {
+  0% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.5;
+  }
+}

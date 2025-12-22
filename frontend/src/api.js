@@ -1,22 +1,43 @@
 import axios from "axios";
 
 const api = axios.create({
-    // Certifique-se que este link é o do seu Render
-    baseURL: "https://icontas.onrender.com",
+    baseURL: "https://icontas.onrender.com", // Seu backend no Render
 });
 
-// --- O SEGREDO ESTÁ AQUI ---
-// Antes de qualquer pedido sair do navegador, essa função roda:
+// --- 1. O QUE SAI (REQUEST) ---
+// Coloca o Token em tudo que sai do navegador
 api.interceptors.request.use((config) => {
-    // 1. Tenta pegar o token salvo no navegador
     const token = localStorage.getItem("token");
-
-    // 2. Se tiver token, cola ele no cabeçalho como um crachá
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
 });
+
+// --- 2. O QUE VOLTA (RESPONSE) - AQUI ESTÁ A CORREÇÃO ---
+// Verifica se o servidor devolveu erro de "Token Inválido"
+api.interceptors.response.use(
+    (response) => {
+        // Se deu tudo certo, só repassa a resposta
+        return response;
+    },
+    (error) => {
+        // Se o erro for 401 (Não Autorizado) ou 422 (Token Estranho)
+        if (error.response && (error.response.status === 401 || error.response.status === 422)) {
+            console.log("Sessão expirada ou inválida. Fazendo logout...");
+
+            // Limpa a sujeira
+            localStorage.removeItem("token");
+            localStorage.removeItem("usuario_nome");
+            localStorage.removeItem("usuario_foto");
+
+            // Redireciona para o login (força bruta para garantir)
+            window.location.href = "/login";
+        }
+
+        // Repassa o erro para o componente mostrar aviso se quiser
+        return Promise.reject(error);
+    }
+);
 
 export default api;
