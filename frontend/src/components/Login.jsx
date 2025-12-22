@@ -24,11 +24,7 @@ function Login() {
             // Salva tudo
             localStorage.setItem('token', dados.token)
             localStorage.setItem('usuario_nome', dados.nome)
-            if (dados.foto) {
-                localStorage.setItem('usuario_foto', dados.foto)
-            } else {
-                localStorage.removeItem('usuario_foto')
-            }
+            
 
             // Redireciona
             navigate('/')
@@ -58,7 +54,7 @@ function Login() {
         <div className="card-responsivo" style={{ maxWidth: '400px', marginTop: '50px' }}>
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                 <img src="/logo.png" alt="Logo" style={{ width: '210px', height: 'auto' }} />
-                <p style={{ color: '#666' }}>Entre para acessar suas finanças</p>
+                <p style={{ color: '#000000ff' }}>Entre para acessar suas finanças</p>
             </div>
 
             <form onSubmit={handleLogin} autoComplete="off">

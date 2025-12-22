@@ -24,7 +24,7 @@ function App() {
       {/* 2. Criei essa div PAIMENT que segura tudo com minHeight 100vh */}
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
-        <AutoLogout />
+        {/* <AutoLogout />  <--- COMENTE AQUI TAMBÉM SE TIVER */}
         <Navbar />
 
         {/* 3. Adicionei 'flex: 1' aqui. Isso faz essa área crescer e empurrar o footer */}
