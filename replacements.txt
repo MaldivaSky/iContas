@@ -1,0 +1,3 @@
+ribp qcbf xhqr sgvz==>[REDACTED_SMTP_PASSWORD]
+chave-super-secreta-do-rafael==>[REDACTED_JWT_SECRET]
+rafaelmaldivas@gmail.com==>[REDACTED_EMAIL]
