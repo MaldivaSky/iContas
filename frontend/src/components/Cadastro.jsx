@@ -1,135 +1,82 @@
 import { useState } from 'react'
-import api from '../api'
-import { useNavigate, Link } from 'react-router-dom'
+import api from '../api' // Usa sua api configurada
+import { Link, useNavigate } from 'react-router-dom'
+import { PiUserBold, PiEnvelopeSimpleBold, PiLockKeyBold } from "react-icons/pi";
 
 function Cadastro() {
     const navigate = useNavigate()
+    const [form, setForm] = useState({ username: '', email: '', senha: '' })
+    const [loading, setLoading] = useState(false)
 
-    // Estados para todos os campos
-    const [nomeCompleto, setNomeCompleto] = useState('')
-    const [username, setUsername] = useState('')
-    const [email, setEmail] = useState('')
-    const [senha, setSenha] = useState('')
-    const [nascimento, setNascimento] = useState('')
-    const [foto, setFoto] = useState(null)
-
-    // Estado apenas visual (para mostrar a foto antes de enviar)
-    const [preview, setPreview] = useState(null)
-
-    const handleFileChange = (e) => {
-        const arquivo = e.target.files[0]
-        if (arquivo) {
-            setFoto(arquivo)
-            // Cria uma URL temporária só para mostrar na tela
-            setPreview(URL.createObjectURL(arquivo))
-        }
+    const handleChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value })
     }
 
-    const handleSubmit = (e) => {
+    const handleCadastro = async (e) => {
         e.preventDefault()
+        setLoading(true)
 
-        // O SEGREDO DO UPLOAD: Usar FormData em vez de objeto comum
-        const formData = new FormData()
-        formData.append('nome_completo', nomeCompleto)
-        formData.append('username', username)
-        formData.append('email', email)
-        formData.append('senha', senha)
-        formData.append('nascimento', nascimento)
-        if (foto) {
-            formData.append('foto', foto)
+        try {
+            // Agora enviamos JSON direto, sem FormData
+            await api.post('/registro', form)
+            alert("Conta criada com sucesso! Faça login.")
+            navigate('/login')
+        } catch (error) {
+            console.error(error)
+            alert(error.response?.data?.erro || "Erro ao criar conta")
+        } finally {
+            setLoading(false)
         }
-
-        api.post('/registro', formData)
-            .then(() => {
-                alert('Conta criada com sucesso! Agora faça login.')
-                setNomeCompleto('')
-                setUsername('')
-                setEmail('')
-                setSenha('')
-                setFoto(null)
-                setPreview(null)
-                
-                navigate('/login') // Manda o usuário para a tela de login
-            })
-            .catch(erro => {
-                console.error(erro)
-                alert(erro.response?.data?.erro || "Erro ao cadastrar")
-            })
     }
 
     return (
-        <div className="card-responsivo">
-            <h2 style={{ textAlign: 'center', color: '#010203ff' }}>Crie sua conta</h2>
-            <p style={{ textAlign: 'center', color: '#fffdfdff', marginBottom: '20px' }}>
-                Comece a controlar suas finanças hoje.
-            </p>
+        <div className="card-responsivo" style={{ maxWidth: '400px', marginTop: '50px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                <img src="/logo.png" alt="Logo" style={{ width: '150px' }} />
+                <h2 style={{ color: '#fcfcfcff' }}>Crie sua conta</h2>
+                <p style={{ color: '#030303ff' }}>É rápido e fácil.</p>
+            </div>
 
-            <form onSubmit={handleSubmit} autoComplete="off">
-
-                {/* --- ÁREA DA FOTO --- */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
-                    <div style={{
-                        width: '100px',
-                        height: '100px',
-                        borderRadius: '50%',
-                        backgroundColor: '#eee',
-                        backgroundImage: `url(${preview})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        border: '3px solid #000000ff',
-                        marginBottom: '10px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden'
-                    }}>
-                        {!preview && <span style={{ fontSize: '40px', color: '#ccc' }}>📷</span>}
-                    </div>
-
-                    <label style={{
-                        cursor: 'pointer',
-                        color: '#000000ff',
-                        fontWeight: 'bold',
-                        padding: '5px 10px',
-                        border: '1px solid #ffffffff',
-                        borderRadius: '5px'
-                    }}>
-                        Escolher Foto
-                        <input type="file" autoComplete="off" onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
-                    </label>
+            <form onSubmit={handleCadastro}>
+                <div style={inputGroupStyle}>
+                    <PiUserBold size={20} color="#820AD1" />
+                    <input name="username" placeholder="Nome de Usuário" value={form.username} onChange={handleChange} style={inputStyle} required />
                 </div>
 
-                <label>Nome Completo:</label>
-                <input type="text" value={nomeCompleto} onChange={e => setNomeCompleto(e.target.value)} required placeholder="Ex: Rafael Silva" style={{ width: '100%', marginBottom: '10px' }} />
-
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <div style={{ flex: 1 }}>
-                        <label>Usuário (Login):</label>
-                        <input type="text" value={username} onChange={e => setUsername(e.target.value)} required placeholder="@rafael" style={{ width: '100%', marginBottom: '10px' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <label>Nascimento:</label>
-                        <input type="date" value={nascimento} onChange={e => setNascimento(e.target.value)} required style={{ width: '100%', marginBottom: '10px' }} />
-                    </div>
+                <div style={inputGroupStyle}>
+                    <PiEnvelopeSimpleBold size={20} color="#820AD1" />
+                    <input name="email" type="email" placeholder="Seu E-mail" value={form.email} onChange={handleChange} style={inputStyle} required />
                 </div>
 
-                <label>Email:</label>
-                <input type="email" autoComplete="off" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com" style={{ width: '100%', marginBottom: '10px' }} />
+                <div style={inputGroupStyle}>
+                    <PiLockKeyBold size={20} color="#820AD1" />
+                    <input name="senha" type="password" placeholder="Crie uma senha" value={form.senha} onChange={handleChange} style={inputStyle} required />
+                </div>
 
-                <label>Senha:</label>
-                <input type="password" autoComplete="new-password" value={senha} onChange={e => setSenha(e.target.value)} required placeholder="******" style={{ width: '100%', marginBottom: '20px' }} />
-
-                <button type="submit" style={{ width: '100%', backgroundColor: '#28a745', color: 'white', border: 'none' }}>
-                    Criar Conta
+                <button type="submit" disabled={loading} style={btnStyle}>
+                    {loading ? 'Criando...' : 'CRIAR CONTA'}
                 </button>
-
             </form>
 
-            <div style={{ textAlign: 'center', marginTop: '15px' }}>
-                Já tem conta? <Link to="/login" style={{ color: '#007bff' }}>Fazer Login</Link>
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <Link to="/login" style={{ color: '#080708ff', fontWeight: 'bold' }}>Já tenho conta</Link>
             </div>
         </div>
     )
+}
+
+const inputGroupStyle = {
+    display: 'flex', alignItems: 'center', gap: '10px',
+    backgroundColor: '#f0f0f0', padding: '10px', borderRadius: '8px', marginBottom: '15px'
+}
+
+const inputStyle = {
+    border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '16px'
+}
+
+const btnStyle = {
+    width: '100%', padding: '12px', backgroundColor: '#820AD1', color: 'white',
+    border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px'
 }
 
 export default Cadastro

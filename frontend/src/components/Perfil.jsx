@@ -1,146 +1,178 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
-import { Link, useNavigate } from 'react-router-dom'
+// NavBar removido para não duplicar com o App.jsx
+import { PiFloppyDiskBold, PiCameraBold } from "react-icons/pi";
 
 function Perfil() {
-    const navigate = useNavigate()
+    const [dados, setDados] = useState({
+        nome_completo: '',
+        telefone: '',
+        nascimento: '',
+        email: '',
+        username: ''
+    })
+    const [fotoPreview, setFotoPreview] = useState(null)
+    const [loading, setLoading] = useState(true)
 
-    // ESTADOS (Variáveis da tela)
-    const [dados, setDados] = useState(null)
-    const [loading, setLoading] = useState(true)       // Carregamento da página
-    const [loadingFoto, setLoadingFoto] = useState(false) // Carregamento do upload da foto
-
-    // 1. FUNÇÃO DE BUSCAR DADOS
+    // Carrega dados ao abrir a tela
     useEffect(() => {
-        // Verifica token localmente só para evitar chamada inútil
-        const token = localStorage.getItem('token')
-        if (!token) {
-            navigate('/login')
-            return
-        }
-
         api.get('/meus-dados')
             .then(res => {
                 setDados(res.data)
-                setLoading(false)
+                setFotoPreview(res.data.foto)
             })
-            .catch(err => {
-                console.error("Erro ao carregar perfil:", err)
-                // 🚨 IMPORTANTE: Removemos o logout manual daqui.
-                // O api.js já cuida de erros 401 (token inválido) globalmente.
-                setLoading(false)
+            .catch(e => console.error(e))
+            .finally(() => setLoading(false))
+    }, [])
+
+    const handleSalvar = async (e) => {
+        e.preventDefault()
+        try {
+            // 1. Salva os textos
+            await api.put('/atualizar-perfil', {
+                nome_completo: dados.nome_completo,
+                telefone: dados.telefone,
+                nascimento: dados.nascimento
             })
-    }, [navigate]) // Adicionado navigate nas dependências
 
-    // 3. FUNÇÃO DE TROCAR A FOTO
-    const handleTrocarFoto = (e) => {
-        const arquivo = e.target.files[0]
-        if (!arquivo) return
+            // Atualiza o cache local para a NavBar saber o nome novo
+            localStorage.setItem('usuario_nome', dados.nome_completo)
 
-        setLoadingFoto(true) // Ativa o "Carregando..." da foto
+            alert("Perfil atualizado com sucesso!")
+            window.location.reload() // Recarrega a página para atualizar a NavBar lá em cima
+        } catch (error) {
+            console.error(error)
+            alert("Erro ao atualizar perfil.")
+        }
+    }
+
+    // Função de Upload de Foto
+    const handleFotoChange = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return;
 
         const formData = new FormData()
-        formData.append('foto', arquivo)
+        formData.append('foto', file)
 
-        api.post('/atualizar-foto', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-            .then(res => {
-                // Salva a nova foto no navegador
-                localStorage.setItem('usuario_foto', res.data.nova_foto)
-                alert('Foto atualizada com sucesso!')
-                window.location.reload() // Recarrega para atualizar a Navbar
+        try {
+            const res = await api.post('/atualizar-foto', formData, {
+                headers: { "Content-Type": "multipart/form-data" }
             })
-            .catch(erro => {
-                console.error(erro)
-                alert('Erro ao enviar foto. Tente uma imagem menor.')
-                setLoadingFoto(false) // Desativa o carregando se der erro
-            })
+
+            setFotoPreview(res.data.nova_foto)
+
+            // --- REMOVIDO: localStorage.setItem('usuario_foto', ...) ---
+            // Não salvamos mais no cache para não dar erro.
+
+            alert("Foto atualizada!")
+            window.location.reload()
+
+        } catch (error) {
+            console.error(error)
+            alert("Erro ao enviar foto.")
+        }
     }
 
-    // Se a página ainda estiver carregando os dados iniciais
-    if (loading) {
-        return <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Carregando perfil...</div>
-    }
-
-    // Proteção extra caso dados venha nulo
-    if (!dados) return <div style={{ textAlign: 'center', padding: '20px' }}>Não foi possível carregar os dados.</div>;
+    if (loading) return <div style={{ textAlign: 'center', padding: 50, color: '#820AD1' }}>Carregando perfil...</div>
 
     return (
-        <div className="card-responsivo" style={{ maxWidth: '500px', margin: '30px auto' }}>
+        <div style={{ backgroundColor: '#f9f9f9', minHeight: '100vh', paddingBottom: '40px' }}>
 
-            {/* CABEÇALHO */}
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '30px' }}>
-                <Link to="/" style={{ textDecoration: 'none', fontSize: '24px', marginRight: '15px', color: '#820AD1' }}>⬅</Link>
-                <h2 style={{ margin: 0, color: '#000' }}>Editar Perfil</h2>
-            </div>
+            {/* NavBar removida daqui (já vem do App.jsx) */}
 
-            {/* FOTO E UPLOAD */}
-            <div style={{ textAlign: 'center', marginBottom: '30px', position: 'relative' }}>
-                <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto' }}>
+            <div style={{ maxWidth: '600px', margin: '0 auto', padding: '30px 20px' }}>
+                <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
 
-                    {/* FOTO DE PERFIL */}
-                    <img
-                        src={dados.foto || "https://cdn-icons-png.flaticon.com/512/847/847969.png"}
-                        alt="Perfil"
-                        style={{
-                            width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover',
-                            border: '4px solid #820AD1',
-                            opacity: loadingFoto ? 0.5 : 1,
-                            transition: 'opacity 0.3s'
-                        }}
-                    />
+                    <h2 style={{ textAlign: 'center', color: '#820AD1', marginBottom: '30px' }}>Meu Perfil</h2>
 
-                    {/* ÍCONE DA CÂMERA / LOADING */}
-                    <label style={{
-                        position: 'absolute', bottom: '0', right: '0', backgroundColor: '#820AD1',
-                        width: '40px', height: '40px', borderRadius: '50%',
-                        display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: loadingFoto ? 'wait' : 'pointer',
-                        border: '3px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', color: '#fff'
-                    }}>
-                        <span style={{ fontSize: '20px' }}>
-                            {loadingFoto ? '⏳' : '📷'}
-                        </span>
+                    {/* ÁREA DA FOTO */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px' }}>
+                        <div style={{ position: 'relative', width: '120px', height: '120px' }}>
+                            <img
+                                src={fotoPreview || "https://cdn-icons-png.flaticon.com/512/847/847969.png"}
+                                alt="Perfil"
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '4px solid #f0f0f0' }}
+                            />
+                            <label style={{
+                                position: 'absolute', bottom: 0, right: 0,
+                                background: '#820AD1', color: 'white',
+                                padding: '8px', borderRadius: '50%', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                            }}>
+                                <PiCameraBold size={20} />
+                                <input type="file" onChange={handleFotoChange} style={{ display: 'none' }} accept="image/*" />
+                            </label>
+                        </div>
+                        <p style={{ marginTop: '10px', color: '#888', fontSize: '14px', fontWeight: 'bold' }}>@{dados.username}</p>
+                    </div>
 
-                        <input
-                            type="file"
-                            onChange={handleTrocarFoto}
-                            accept="image/*"
-                            disabled={loadingFoto}
-                            style={{ display: 'none' }}
-                        />
-                    </label>
+                    {/* FORMULÁRIO */}
+                    <form onSubmit={handleSalvar} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                        <div>
+                            <label style={labelStyle}>Nome Completo</label>
+                            <input
+                                type="text"
+                                value={dados.nome_completo || ''}
+                                onChange={e => setDados({ ...dados, nome_completo: e.target.value })}
+                                style={inputStyle}
+                                placeholder="Como você quer ser chamado?"
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: '140px' }}>
+                                <label style={labelStyle}>Telefone / Celular</label>
+                                <input
+                                    type="text"
+                                    value={dados.telefone || ''}
+                                    onChange={e => setDados({ ...dados, telefone: e.target.value })}
+                                    style={inputStyle}
+                                    placeholder="(XX) 9XXXX-XXXX"
+                                />
+                            </div>
+                            <div style={{ flex: 1, minWidth: '140px' }}>
+                                <label style={labelStyle}>Data de Nascimento</label>
+                                <input
+                                    type="date"
+                                    value={dados.nascimento || ''}
+                                    onChange={e => setDados({ ...dados, nascimento: e.target.value })}
+                                    style={inputStyle}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>E-mail (Não editável)</label>
+                            <input
+                                type="text"
+                                value={dados.email}
+                                disabled
+                                style={{ ...inputStyle, background: '#f5f5f5', color: '#888', cursor: 'not-allowed' }}
+                            />
+                        </div>
+
+                        <button type="submit" style={btnSalvarStyle}>
+                            <PiFloppyDiskBold size={22} /> SALVAR ALTERAÇÕES
+                        </button>
+
+                    </form>
                 </div>
-
-                <h3 style={{ marginTop: '15px', marginBottom: '5px' }}>{dados.nome_completo}</h3>
-                <p style={{ color: '#666', margin: 0 }}>@{dados.username}</p>
             </div>
-
-            {/* DADOS DO USUÁRIO */}
-            <div style={{ backgroundColor: '#f9f9f9', padding: '20px', borderRadius: '12px', marginBottom: '25px', border: '1px solid #eee' }}>
-                <p style={{ margin: '0 0 10px 0' }}><strong>📧 Email:</strong> {dados.email}</p>
-                <p style={{ margin: 0 }}><strong>🎂 Nascimento:</strong> {dados.nascimento ? dados.nascimento.split('-').reverse().join('/') : '-'}</p>
-            </div>
-
-            <button
-                onClick={() => { localStorage.clear(); window.location.href = '/login' }}
-                style={{
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: '#ff4d4d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                }}>
-                Sair da Conta
-            </button>
-
         </div>
     )
+}
+
+// Estilos
+const labelStyle = { display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#555', fontSize: '14px' }
+const inputStyle = { width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '16px', boxSizing: 'border-box' }
+const btnSalvarStyle = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+    width: '100%', padding: '15px', backgroundColor: '#0dc325', color: 'white',
+    border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer',
+    marginTop: '10px',
+    transition: 'background 0.2s'
 }
 
 export default Perfil

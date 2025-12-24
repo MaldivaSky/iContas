@@ -1,68 +1,71 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom' // Removi o useNavigate daqui
+import api from '../api'
 
 function Navbar() {
-    const navigate = useNavigate()
+    // Removi a linha: const navigate = useNavigate()
 
-    const nomeUsuario = localStorage.getItem('usuario_nome')
-    const fotoUsuario = localStorage.getItem('usuario_foto')
+    const [dadosUser, setDadosUser] = useState({ nome: '', foto: null })
+
+    useEffect(() => {
+        async function carregarDados() {
+            try {
+                const res = await api.get('/meus-dados')
+                const nomeCompleto = res.data.nome_completo || res.data.username;
+                const primeiroNome = nomeCompleto.split(' ')[0];
+
+                setDadosUser({
+                    nome: primeiroNome,
+                    foto: res.data.foto
+                })
+            } catch (error) {
+                console.error("Erro ao carregar topo:", error)
+            }
+        }
+        carregarDados()
+    }, [])
 
     const sair = () => {
         if (confirm("Deseja realmente sair?")) {
             localStorage.clear()
-            navigate('/login')
+            // Mantemos o window.location.href pois ele garante que limpa a memória do app
+            window.location.href = '/login'
         }
     }
 
-    if (!nomeUsuario) return null;
-
-    const primeiroNome = nomeUsuario.split(' ')[0]
+    if (!dadosUser.nome) return null;
 
     return (
         <nav style={styles.container}>
-
-            {/* --- LADO ESQUERDO: LOGO --- */}
             <Link to="/" style={styles.logoLink}>
-                <img
-                    src="/logo2.png"
-                    alt="Logo iContas"
-                    style={{ width: '180px', height: '120px' }}
-                />
+                <img src="/logo2.png" alt="Logo" style={{ width: '120px', height: 'auto' }} />
             </Link>
 
-            {/* --- LADO DIREITO --- */}
             <div style={styles.rightArea}>
-
-                {/* AGORA SIM: O Link envolve o Texto E a Foto.
-            Clicou em qualquer lugar aqui -> Vai pro Perfil 
-        */}
                 <Link to="/perfil" style={styles.profileLink} title="Ver meu perfil">
-
                     <div style={styles.greetingBox}>
                         <span style={styles.greetingText}>Olá,</span>
-                        <span style={styles.userName}>{primeiroNome}</span>
+                        <span style={styles.userName}>{dadosUser.nome}</span>
                     </div>
 
-                    {fotoUsuario && fotoUsuario !== 'null' ? (
-                        <img src={fotoUsuario} alt="Perfil" style={styles.avatarImg} />
+                    {dadosUser.foto ? (
+                        <img src={dadosUser.foto} alt="Perfil" style={styles.avatarImg} />
                     ) : (
                         <div style={styles.avatarPlaceholder}>
-                            {primeiroNome.charAt(0).toUpperCase()}
+                            {dadosUser.nome.charAt(0).toUpperCase()}
                         </div>
                     )}
                 </Link>
 
-                {/* Divisória vertical sutil */}
                 <div style={styles.divider}></div>
 
-                {/* Botão Sair */}
-                <button onClick={sair} style={styles.logoutBtn} title="Sair do sistema">
+                <button onClick={sair} style={styles.logoutBtn} title="Sair">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
                 </button>
-
             </div>
         </nav>
     )
@@ -70,7 +73,7 @@ function Navbar() {
 
 const styles = {
     container: {
-        backgroundColor: '#6a0596ff', // Roxo Nubank
+        backgroundColor: '#820AD1',
         height: '70px',
         display: 'flex',
         justifyContent: 'space-between',
@@ -82,83 +85,16 @@ const styles = {
         zIndex: 1000,
         color: '#fff'
     },
-    logoLink: {
-        textDecoration: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        color: '#fff'
-    },
-    logoIcon: { fontSize: '24px' },
-    logoText: { fontSize: '22px', fontWeight: '700', letterSpacing: '-0.5px' },
-
-    rightArea: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '15px' // Espaço entre o perfil e o botão sair
-    },
-
-    // ESTILO DO LINK DO PERFIL (NOME + FOTO)
-    profileLink: {
-        textDecoration: 'none',
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        cursor: 'pointer',
-        padding: '5px 10px',
-        borderRadius: '8px',
-        transition: 'background 0.2s',
-    },
-    // Efeito Hover (opcional, simulação simples)
-    // ':hover': { backgroundColor: 'rgba(255,255,255,0.1)' } <--- Em CSS puro seria assim
-
-    greetingBox: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        lineHeight: '1.2',
-    },
+    logoLink: { display: 'flex', alignItems: 'center' },
+    rightArea: { display: 'flex', alignItems: 'center', gap: '15px' },
+    profileLink: { textDecoration: 'none', color: '#fff', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' },
+    greetingBox: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: '1.2' },
     greetingText: { fontSize: '12px', opacity: 0.8 },
-    userName: { fontWeight: '600', fontSize: '16px' },
-
-    avatarImg: {
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
-        objectFit: 'cover',
-        border: '2px solid rgba(255,255,255,0.8)'
-    },
-    avatarPlaceholder: {
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        color: '#fff',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontWeight: 'bold',
-        fontSize: '18px',
-        border: '2px solid rgba(255,255,255,0.5)'
-    },
-
-    divider: {
-        width: '1px',
-        height: '30px',
-        backgroundColor: 'rgba(255,255,255,0.2)'
-    },
-
-    logoutBtn: {
-        background: 'transparent',
-        border: 'none',
-        color: 'rgba(255,255,255,0.7)',
-        cursor: 'pointer',
-        padding: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        transition: 'color 0.2s'
-    }
+    userName: { fontWeight: '600', fontSize: '16px', textTransform: 'capitalize' },
+    avatarImg: { width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.8)', backgroundColor: 'white' },
+    avatarPlaceholder: { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '18px', border: '2px solid rgba(255,255,255,0.5)' },
+    divider: { width: '1px', height: '30px', backgroundColor: 'rgba(255,255,255,0.2)' },
+    logoutBtn: { background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center' }
 }
 
 export default Navbar

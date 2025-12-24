@@ -127,68 +127,46 @@ def home_data():
 # 👤 4. ROTAS DE USUÁRIO (REGISTRO, LOGIN, PERFIL)
 # ==============================================================================
 
-
 @app.route("/registro", methods=["POST"])
 def registrar():
-    print("--- DEBUG: A rota /registro foi chamada! ---")  # <--- ADICIONE ISSO
     session = Session()
     try:
-        # IMPORTANTE: Quando vem arquivo, usamos request.form e request.files
-        # NÃO use request.json aqui
+        # Agora recebemos JSON simples, pois não tem upload de foto aqui
+        dados = request.json
 
-        # 1. Pegar dados (com .get para evitar crash se faltar algo)
-        nome_completo = request.form.get("nome_completo")
-        username_input = request.form.get("username")
-        email_input = request.form.get("email")
-        senha = request.form.get("senha")
-        nascimento = request.form.get("nascimento")
-        foto = request.files.get("foto")  # Pega o arquivo se existir
+        username_input = dados.get("username")
+        email_input = dados.get("email")
+        senha = dados.get("senha")
 
-        # Validação básica
         if not username_input or not email_input or not senha:
-            return jsonify({"erro": "Preencha os campos obrigatórios"}), 400
+            return jsonify({"erro": "Preencha usuário, email e senha!"}), 400
 
-        # Normalizar
         username = username_input.lower()
         email = email_input.lower()
 
-        # Verifica duplicidade
         if (
             session.query(Usuario)
             .filter((Usuario.email == email) | (Usuario.username == username))
             .first()
         ):
-            return jsonify({"erro": "Email ou Usuário já cadastrado!"}), 400
+            return jsonify({"erro": "Usuário ou Email já existe!"}), 400
 
-        # Processar Foto (Base64)
-        foto_dados = None
-        if foto:
-            file_content = foto.read()
-            encoded_string = base64.b64encode(file_content).decode("utf-8")
-            foto_dados = f"data:{foto.mimetype};base64,{encoded_string}"
-
-        # Criar Usuário
+        # Cria usuário só com o básico. O resto fica NULL por enquanto.
         novo = Usuario(
-            nome_completo=nome_completo,
             username=username,
             email=email,
             senha_hash=generate_password_hash(senha),
-            # Tratamento seguro para data (evita erro se vier vazio)
-            nascimento=(
-                datetime.strptime(nascimento, "%Y-%m-%d").date() if nascimento else None
-            ),
-            foto_path=foto_dados,
+            nome_completo=username,  # Usa o user como nome provisório
         )
 
         session.add(novo)
         session.commit()
-        return jsonify({"mensagem": "Conta criada com sucesso!"}), 201
+        return jsonify({"mensagem": "Conta criada! Faça login."}), 201
 
     except Exception as e:
         session.rollback()
-        # Esse print vai fazer o erro aparecer no seu terminal Python se acontecer de novo!
         print(f"ERRO NO REGISTRO: {e}")
-        return jsonify({"erro": f"Erro interno: {str(e)}"}), 500
+        return jsonify({"erro": str(e)}), 500
     finally:
         session.close()
 
@@ -225,6 +203,7 @@ def login():
     )
 
 
+# --- ATUALIZE A ROTA MEUS-DADOS (Para retornar o telefone também) ---
 @app.route("/meus-dados", methods=["GET"])
 @jwt_required()
 def meus_dados():
@@ -239,8 +218,9 @@ def meus_dados():
         "nome_completo": usuario.nome_completo,
         "email": usuario.email,
         "username": usuario.username,
-        "nascimento": str(usuario.nascimento),
-        "foto": usuario.foto_path,  # Base64
+        "nascimento": str(usuario.nascimento) if usuario.nascimento else "",
+        "telefone": usuario.telefone or "",  # Retorna vazio se for None
+        "foto": usuario.foto_path,
     }
     session.close()
     return jsonify(dados)
@@ -271,6 +251,34 @@ def atualizar_foto():
 
     session.close()
     return jsonify({"erro": "Erro ao processar arquivo"}), 400
+
+
+@app.route("/atualizar-perfil", methods=["PUT"])
+@jwt_required()
+def atualizar_perfil():
+    usuario_id = get_jwt_identity()
+    session = Session()
+    usuario = session.query(Usuario).filter_by(id=usuario_id).first()
+
+    dados = request.json
+
+    if "nome_completo" in dados:
+        usuario.nome_completo = dados["nome_completo"]
+
+    if "telefone" in dados:
+        usuario.telefone = dados["telefone"]
+
+    if "nascimento" in dados and dados["nascimento"]:
+        try:
+            usuario.nascimento = datetime.strptime(
+                dados["nascimento"], "%Y-%m-%d"
+            ).date()
+        except:
+            pass  # Ignora se data vier inválida
+
+    session.commit()
+    session.close()
+    return jsonify({"mensagem": "Perfil atualizado com sucesso!"})
 
 
 # ==============================================================================

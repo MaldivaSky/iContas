@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
-// NavBar removido daqui para evitar duplicação
 import './Home.css';
+// Navbar removida (já está no App.jsx)
 
 import {
     PiCurrencyDollarSimpleBold,
@@ -14,39 +14,41 @@ import {
 
 function Home() {
     const [loading, setLoading] = useState(true);
-    const [usuario, setUsuario] = useState({ nome: 'Visitante', foto: null });
+    // Inicializa com nome vazio para não piscar "Visitante"
+    const [usuario, setUsuario] = useState({ nome: '', foto: null });
 
     useEffect(() => {
         async function carregarTudo() {
             try {
+                // 1. Busca dados do usuário da API
                 const respUsuario = await api.get('/meus-dados');
-                // Tenta carregar dados gráficos (opcional)
+
+                // Tenta carregar gráficos (opcional)
                 try { await api.get('/dados-graficos'); } catch (e) { console.error(e); }
 
-                const nomeCompleto = respUsuario.data.nome_completo;
-                const foto = respUsuario.data.foto;
+                const dados = respUsuario.data;
 
-                // --- GARANTIA PARA O NAVBAR GLOBAL ---
-                // Isso aqui é crucial: alimenta o localStorage para que o NavBar do App.jsx funcione
-                localStorage.setItem('usuario_nome', nomeCompleto);
-                if (foto) localStorage.setItem('usuario_foto', foto);
+                // --- LÓGICA DO NOME ---
+                // Se tiver nome completo, usa ele. Se não, usa o username.
+                const nomePrincipal = dados.nome_completo || dados.username;
+                // Pega só o primeiro nome
+                const primeiroNome = nomePrincipal.split(' ')[0];
+
+                // --- NÃO SALVAMOS MAIS A FOTO NO LOCALSTORAGE ---
+                // Isso evita o erro "QuotaExceededError"
+                localStorage.setItem('usuario_nome', primeiroNome);
 
                 setUsuario({
-                    nome: nomeCompleto.split(' ')[0],
-                    foto: foto
+                    nome: primeiroNome,
+                    foto: dados.foto
                 });
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
 
-                const dadosLocal = localStorage.getItem('usuario_dados');
-                if (dadosLocal) {
-                    const userObj = JSON.parse(dadosLocal);
-                    localStorage.setItem('usuario_nome', userObj.nome); // Fallback para NavBar
-
-                    setUsuario({
-                        nome: userObj.nome ? userObj.nome.split(' ')[0] : 'Visitante',
-                        foto: userObj.foto
-                    });
+                // Fallback (apenas nome, foto não cabe no cache)
+                const nomeCache = localStorage.getItem('usuario_nome');
+                if (nomeCache) {
+                    setUsuario(prev => ({ ...prev, nome: nomeCache }));
                 }
             } finally {
                 setLoading(false);
@@ -59,7 +61,7 @@ function Home() {
         return (
             <div className="loading-container">
                 <div className="spinner"></div>
-                <div className="loading-text">Conectando ao servidor seguro...</div>
+                <div className="loading-text">Conectando...</div>
             </div>
         );
     }
@@ -68,8 +70,6 @@ function Home() {
 
     return (
         <div style={{ paddingBottom: '40px', backgroundColor: '#f9f9f9', minHeight: '100vh' }}>
-
-            {/* NavBar removida daqui (ela virá do App.jsx) */}
 
             {/* CABEÇALHO */}
             <div style={{
@@ -112,7 +112,7 @@ function Home() {
                 </h3>
 
                 <div className="menu-grid" style={{ boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
-                    <Link to="/transacoes" className="card-menu">
+                    <Link to="/nova-transacao" className="card-menu">
                         <PiCurrencyDollarSimpleBold size={40} style={iconStyle} />
                         <strong>Registrar</strong>
                     </Link>

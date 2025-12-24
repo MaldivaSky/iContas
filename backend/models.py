@@ -7,12 +7,17 @@ Base = declarative_base()
 class Usuario(Base):
     __tablename__ = "usuarios"
     id = Column(Integer, primary_key=True)
-    nome_completo = Column(String)
-    username = Column(String, unique=True)
-    email = Column(String, unique=True)
-    senha_hash = Column(String)
-    nascimento = Column(Date)
-    foto_path = Column(String)  # Base64 da foto
+
+    # Login Básico
+    username = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    senha_hash = Column(String, nullable=False)
+
+    # Dados de Perfil (Agora Opcionais no início)
+    nome_completo = Column(String, nullable=True)
+    nascimento = Column(Date, nullable=True)
+    telefone = Column(String, nullable=True)  # <--- NOVO CAMPO
+    foto_path = Column(String, nullable=True)
 
 
 class Categoria(Base):
