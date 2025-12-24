@@ -46,6 +46,7 @@ function App() {
           {/* Rotas Protegidas */}
           <Route path="/" element={<RotaProtegida><Home /></RotaProtegida>} />
           <Route path="/transacoes" element={<RotaProtegida><FormTransacao /></RotaProtegida>} />
+          <Route path="/nova-transacao" element={<RotaProtegida><FormTransacao /></RotaProtegida>} />
           <Route path="/extrato" element={<RotaProtegida><Extrato /></RotaProtegida>} />
           <Route path="/analise" element={<RotaProtegida><AnaliseGrafica /></RotaProtegida>} />
           <Route path="/categorias" element={<RotaProtegida><FormCategoria /></RotaProtegida>} />
