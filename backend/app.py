@@ -5,7 +5,7 @@ import io
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from flask_mail import Mail, Message
 
@@ -663,6 +663,44 @@ def debug_usuarios():
         )
     session.close()
     return jsonify(lista)
+
+
+# --- ROTA TEMPORÁRIA PARA CORRIGIR O BANCO DA NUVEM ---
+@app.route("/fix-banco", methods=["GET"])
+def fix_banco():
+    session = Session()
+    try:
+        print("Tentando corrigir o banco...")
+        # 1. Adiciona a coluna telefone
+        session.execute(
+            text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefone VARCHAR")
+        )
+
+        # 2. Permite que nome e nascimento sejam vazios (caso o banco antigo exigisse)
+        # Nota: Estes comandos são específicos para PostgreSQL (Render)
+        try:
+            session.execute(
+                text("ALTER TABLE usuarios ALTER COLUMN nascimento DROP NOT NULL")
+            )
+            session.execute(
+                text("ALTER TABLE usuarios ALTER COLUMN nome_completo DROP NOT NULL")
+            )
+            session.execute(
+                text("ALTER TABLE usuarios ALTER COLUMN foto_path DROP NOT NULL")
+            )
+        except Exception as e:
+            print(f"Aviso ao alterar colunas (pode ser ignorado se for SQLite): {e}")
+
+        session.commit()
+        return (
+            "✅ SUCESSO! O Banco de Dados na nuvem foi corrigido. Pode voltar pro App."
+        )
+
+    except Exception as e:
+        session.rollback()
+        return f"❌ ERRO: {str(e)}"
+    finally:
+        session.close()
 
 
 # Iniciar App
