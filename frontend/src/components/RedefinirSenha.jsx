@@ -1,36 +1,47 @@
 import { useState } from 'react'
 import api from '../api'
-import { useParams, useNavigate } from 'react-router-dom' // useParams pega o token da URL
+import { useParams, useNavigate } from 'react-router-dom'
 
 function RedefinirSenha() {
-    const { token } = useParams() // Pega o código gigante da URL
+    const { token } = useParams()
     const navigate = useNavigate()
 
     const [novaSenha, setNovaSenha] = useState('')
     const [confirmarSenha, setConfirmarSenha] = useState('')
+    const [erro, setErro] = useState('')
 
-    const salvarNovaSenha = (e) => {
+    const validarSenhaForte = (senha) => {
+        // Regex: Min 6, 1 Maiúscula, 1 Número, 1 Especial
+        const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+        return regex.test(senha);
+    }
+
+    const salvarNovaSenha = async (e) => {
         e.preventDefault()
+        setErro('')
 
         if (novaSenha !== confirmarSenha) {
-            alert("As senhas não conferem!")
+            setErro("As senhas não conferem!")
             return
         }
 
-        // Enviamos o token no cabeçalho (Authorization) para o backend validar
-        api.post('/resetar-senha-token',
-            { nova_senha: novaSenha },
-            { headers: { Authorization: 'Bearer ' + token } }
-        )
-            .then(() => {
-                alert('Senha alterada com sucesso! Você receberá um e-mail de confirmação.')
-                navigate('/login')
-            })
-            .catch((error) => {
-                console.error(error)
-                alert('Link inválido ou expirado. Solicite um novo.')
-                navigate('/esqueci-senha')
-            })
+        if (!validarSenhaForte(novaSenha)) {
+            setErro("Senha fraca: use min. 6 caracteres, 1 maiúscula, 1 número e 1 símbolo.")
+            return
+        }
+
+        try {
+            await api.post('/resetar-senha-token',
+                { nova_senha: novaSenha },
+                { headers: { Authorization: 'Bearer ' + token } }
+            )
+            alert('✅ Senha alterada com sucesso! Redirecionando...')
+            navigate('/login')
+        } catch (error) {
+            console.error(error)
+            const msg = error.response?.data?.erro || 'Link inválido ou expirado.'
+            alert(msg)
+        }
     }
 
     return (
@@ -38,21 +49,26 @@ function RedefinirSenha() {
             <h2 style={{ textAlign: 'center', color: '#820AD1' }}>Criar Nova Senha</h2>
 
             <form onSubmit={salvarNovaSenha}>
-                <label>Nova Senha:</label>
+                <label style={{ fontWeight: 'bold' }}>Nova Senha:</label>
                 <input
                     type="password" value={novaSenha} onChange={e => setNovaSenha(e.target.value)}
-                    required placeholder="******" style={{ width: '100%', marginBottom: '10px' }}
+                    required placeholder="Ex: SenhaForte1!" style={{ width: '100%', padding: 10, marginBottom: '10px', borderRadius: 5, border: '1px solid #ccc' }}
                 />
+                <small style={{ display: 'block', marginBottom: 15, color: '#666', fontSize: 12 }}>
+                    Mínimo 6 caracteres, 1 maiúscula, 1 número e 1 símbolo.
+                </small>
 
-                <label>Confirme a Nova Senha:</label>
+                <label style={{ fontWeight: 'bold' }}>Confirme a Nova Senha:</label>
                 <input
                     type="password" value={confirmarSenha} onChange={e => setConfirmarSenha(e.target.value)}
-                    required placeholder="******" style={{ width: '100%', marginBottom: '20px' }}
+                    required placeholder="Repita a senha" style={{ width: '100%', padding: 10, marginBottom: '20px', borderRadius: 5, border: '1px solid #ccc' }}
                 />
 
+                {erro && <p style={{ color: 'red', textAlign: 'center', marginBottom: 15 }}>{erro}</p>}
+
                 <button type="submit" style={{
-                    width: '100%', backgroundColor: '#28a745', color: 'white',
-                    border: 'none', padding: '12px', borderRadius: '5px', cursor: 'pointer'
+                    width: '100%', backgroundColor: '#0dc325', color: 'white', fontWeight: 'bold',
+                    border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer'
                 }}>
                     Salvar Nova Senha
                 </button>

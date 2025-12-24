@@ -21,8 +21,8 @@ function EsqueciSenha() {
 
     return (
         <div className="card-responsivo" style={{ maxWidth: '400px', marginTop: '50px' }}>
-            <h2 style={{ textAlign: 'center', color: '#820AD1' }}>Recuperar Senha</h2>
-            <p style={{ textAlign: 'center', color: '#666' }}>Enviaremos um link mágico para você.</p>
+            <h2 style={{ textAlign: 'center', color: '#000001ff' }}>Recuperar Senha</h2>
+            <p style={{ textAlign: 'center', color: '#ffffffff' }}>Enviaremos um link mágico para você.</p>
 
             <form onSubmit={enviarLink}>
                 <label>Seu E-mail Cadastrado:</label>

@@ -70,7 +70,7 @@ function Login() {
                     />
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '5px' }}>
                     <label style={{ display: 'block', marginBottom: '5px' }}>Senha:</label>
                     <input
                         type="password"
@@ -80,6 +80,10 @@ function Login() {
                         placeholder="Sua senha secreta"
                         style={{ width: '100%', padding: '10px' }}
                     />
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '5px', marginBottom: '20px' }}>
+                    <Link to="/esqueci-senha" style={{ fontSize: '14px', color: '#000000ff' }}>Esqueci minha senha</Link>
                 </div>
 
                 <button
@@ -103,6 +107,7 @@ function Login() {
                     CRIAR CONTA GRÁTIS
                 </Link>
             </div>
+            
         </div>
     )
 }

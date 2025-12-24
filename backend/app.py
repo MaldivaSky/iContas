@@ -2,6 +2,7 @@ import os
 import base64
 import csv
 import io
+import re
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -638,71 +639,103 @@ def exportar_relatorio():
     )
 
 
-# --- ROTAS DE RECUPERAÇÃO DE SENHA (MANTIDAS) ---
 @app.route("/esqueci-senha", methods=["POST"])
 def esqueci_senha():
-    # ... (Mantenha a lógica de enviar email aqui se desejar, ou copie do seu arquivo anterior)
-    # Para economizar espaço, se não estiver usando agora, pode deixar simples:
-    return jsonify({"msg": "Funcionalidade em manutenção"}), 503
-
-
-@app.route("/debug/usuarios", methods=["GET"])
-def debug_usuarios():
     session = Session()
-    users = session.query(Usuario).all()
-    lista = []
-    for u in users:
-        lista.append(
-            {
-                "id": u.id,
-                "username": u.username,
-                "email": u.email,
-                "senha_hash_preview": u.senha_hash[:10]
-                + "...",  # Só o começo pra confirmar que é hash
-            }
-        )
+    dados = request.json
+    email = dados.get("email").lower()
+
+    usuario = session.query(Usuario).filter_by(email=email).first()
     session.close()
-    return jsonify(lista)
 
+    if not usuario:
+        # Retornamos sucesso mesmo se não achar, para segurança (evita enumeração de users)
+        return jsonify({"msg": "Se o email existir, enviamos o link."}), 200
 
-# --- ROTA TEMPORÁRIA PARA CORRIGIR O BANCO DA NUVEM ---
-@app.route("/fix-banco", methods=["GET"])
-def fix_banco():
-    session = Session()
+    # 1. Gera um token temporário (válido por 15 min)
+    token = create_access_token(
+        identity=str(usuario.id), expires_delta=timedelta(minutes=15)
+    )
+
+    # 2. Define o Link do Frontend (Local ou Produção)
+    # Tenta adivinhar se é prod ou local, ou defina fixo se preferir
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+    link = f"{frontend_url}/redefinir-senha/{token}"
+
+    # 3. Envia o Email
     try:
-        print("Tentando corrigir o banco...")
-        # 1. Adiciona a coluna telefone
-        session.execute(
-            text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefone VARCHAR")
-        )
+        meu_email = "rafaelmaldivas@gmail.com" # Ou use app.config['MAIL_USERNAME']
 
-        # 2. Permite que nome e nascimento sejam vazios (caso o banco antigo exigisse)
-        # Nota: Estes comandos são específicos para PostgreSQL (Render)
-        try:
-            session.execute(
-                text("ALTER TABLE usuarios ALTER COLUMN nascimento DROP NOT NULL")
+        msg = Message(
+            subject="Recuperação de Senha - iContas",
+            sender=meu_email,  # <--- O PULO DO GATO ESTÁ AQUI
+            recipients=[email]
             )
-            session.execute(
-                text("ALTER TABLE usuarios ALTER COLUMN nome_completo DROP NOT NULL")
-            )
-            session.execute(
-                text("ALTER TABLE usuarios ALTER COLUMN foto_path DROP NOT NULL")
-            )
-        except Exception as e:
-            print(f"Aviso ao alterar colunas (pode ser ignorado se for SQLite): {e}")
+        msg.body = f"""Olá, {usuario.username}!
 
-        session.commit()
-        return (
-            "✅ SUCESSO! O Banco de Dados na nuvem foi corrigido. Pode voltar pro App."
-        )
+Recebemos um pedido para redefinir sua senha.
+Clique no link abaixo para criar uma nova senha (válido por 15 minutos):
 
+{link}
+
+Se não foi você, apenas ignore este e-mail.
+
+Att,
+Equipe iContas
+"""
+        mail.send(msg)
+        return jsonify({"msg": "Email enviado"}), 200
     except Exception as e:
-        session.rollback()
-        return f"❌ ERRO: {str(e)}"
-    finally:
+        print(f"Erro ao enviar email: {e}")
+        return jsonify({"erro": "Erro ao enviar email"}), 500
+
+
+@app.route("/resetar-senha-token", methods=["POST"])
+@jwt_required()
+def resetar_senha_token():
+    usuario_id = get_jwt_identity()
+    session = Session()
+    dados = request.json
+    nova_senha = dados.get("nova_senha")
+
+    # 1. Validação de Senha Forte (Regra de Ouro 🏆)
+    # Mínimo 6 chars, 1 Maiúscula, 1 Número, 1 Especial
+    regex_forte = r"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$"
+
+    if not re.match(regex_forte, nova_senha):
         session.close()
+        return (
+            jsonify(
+                {
+                    "erro": "A senha deve ter no mínimo 6 caracteres, 1 letra maiúscula, 1 número e 1 símbolo (@$!%*?&)."
+                }
+            ),
+            400,
+        )
 
+    # 2. Atualiza a senha
+    usuario = session.query(Usuario).filter_by(id=usuario_id).first()
+    if usuario:
+        usuario.senha_hash = generate_password_hash(nova_senha)
+        session.commit()
 
+        # Opcional: Enviar email de confirmação
+        try:
+            msg = Message(
+                "Senha Alterada com Sucesso - iContas", recipients=[usuario.email]
+            )
+            msg.body = "Sua senha foi alterada com sucesso. Tente fazer login agora."
+            mail.send(msg)
+        except:
+            pass  # Se falhar o email de aviso, não tem problema
+
+        session.close()
+        return jsonify({"msg": "Senha atualizada!"}), 200
+
+    session.close()
+    return jsonify({"erro": "Usuário não encontrado"}), 404
+
+# ==============================================================================
 # Iniciar App
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
