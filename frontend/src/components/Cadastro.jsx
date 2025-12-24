@@ -2,7 +2,7 @@ import { useState } from 'react'
 import api from '../api' // Usa sua api configurada
 import { Link, useNavigate } from 'react-router-dom'
 import { PiUserBold, PiEnvelopeSimpleBold, PiLockKeyBold } from "react-icons/pi";
-
+import { toast } from 'react-toastify';
 function Cadastro() {
     const navigate = useNavigate()
     const [form, setForm] = useState({ username: '', email: '', senha: '' })
@@ -19,11 +19,11 @@ function Cadastro() {
         try {
             // Agora enviamos JSON direto, sem FormData
             await api.post('/registro', form)
-            alert("Conta criada com sucesso! Faça login.")
+            toast.success("Conta criada com sucesso! Faça login.")
             navigate('/login')
         } catch (error) {
             console.error(error)
-            alert(error.response?.data?.erro || "Erro ao criar conta")
+            toast.error(error.response?.data?.erro || "Erro ao criar conta")
         } finally {
             setLoading(false)
         }

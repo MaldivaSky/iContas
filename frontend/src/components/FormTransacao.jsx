@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../api' // <--- AQUI ESTÁ A MÁGICA (Mudamos de axios para api)
+import { toast } from 'react-toastify';
 
 function FormularioTransacao() {
     const [tipo, setTipo] = useState('saida')
@@ -20,7 +21,7 @@ function FormularioTransacao() {
             })
             .catch(erro => {
                 console.error("Erro ao buscar categorias:", erro)
-                alert("Não foi possível carregar as categorias.")
+                toast("Não foi possível carregar as categorias.")
             })
     }, [])
 
@@ -29,10 +30,10 @@ function FormularioTransacao() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
                 setLocal(`${pos.coords.latitude}, ${pos.coords.longitude}`)
-                alert("Localização capturada!")
-            }, () => alert("Erro ao pegar GPS"))
+                toast.success("Localização capturada!")
+            }, () => toast.error("Erro ao pegar GPS"))
         } else {
-            alert("Navegador sem suporte a GPS")
+            toast.error("Navegador sem suporte a GPS")
         }
     }
 
@@ -50,12 +51,12 @@ function FormularioTransacao() {
             categoria_id: categoriaId
         })
             .then(() => {
-                alert('Salvo com sucesso!')
+                toast.success('Salvo com sucesso!')
                 setValor(''); setDescricao(''); setLocal('')
             })
             .catch(erro => {
                 console.error(erro)
-                alert("Erro ao salvar transação.")
+                toast("Erro ao salvar transação.")
             })
     }
 

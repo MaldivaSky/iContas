@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
+import { toast } from 'react-toastify';
 
 function FormularioCategoria() {
     const [principal, setPrincipal] = useState('')
@@ -30,25 +31,25 @@ function FormularioCategoria() {
             // Editar (PUT)
             api.put(`/categorias/${idEditando}`, dados)
                 .then(() => {
-                    alert('Categoria atualizada!')
+                    toast.success('Categoria atualizada!')
                     limparFormulario()
                     carregarCategorias()
                 })
                 .catch(erro => {
                     console.error(erro)
-                    alert('Erro ao atualizar. Veja o console para detalhes.')
+                    toast.error('Erro ao atualizar. Veja o console para detalhes.')
                 })
         } else {
             // Criar (POST)
             api.post('/categorias', dados)
                 .then(() => {
-                    alert('Categoria criada!')
+                    toast.success('Categoria criada!')
                     limparFormulario()
                     carregarCategorias()
                 })
                 .catch(erro => {
                     console.error(erro)
-                    alert('Erro ao criar. Veja o console para detalhes.')
+                    toast.error('Erro ao criar. Veja o console para detalhes.')
                 })
         }
     }
@@ -61,7 +62,7 @@ function FormularioCategoria() {
                 })
                 .catch(erro => {
                     console.error(erro)
-                    alert('Erro ao excluir. Talvez ela esteja em uso.')
+                    toast.error('Erro ao excluir. Talvez ela esteja em uso.')
                 })
         }
     }

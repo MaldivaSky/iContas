@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { toast } from 'react-toastify';
 
 const AutoLogout = () => {
     useEffect(() => {
@@ -10,7 +11,7 @@ const AutoLogout = () => {
 
             // Define para 30 minutos (30 * 60 * 1000 milissegundos)
             timer = setTimeout(() => {
-                alert("Sessão expirada por inatividade. Faça login novamente.")
+                toast.error("Sessão expirada por inatividade. Faça login novamente.")
                 localStorage.clear()
                 window.location.href = '/login'
             }, 30 * 60 * 1000)

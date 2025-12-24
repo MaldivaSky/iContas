@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import api from '../api'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify';
 
 function EsqueciSenha() {
     const [email, setEmail] = useState('')
@@ -12,10 +13,10 @@ function EsqueciSenha() {
 
         api.post('/esqueci-senha', { email })
             .then(() => {
-                alert('Boa! Verifique seu e-mail (e a caixa de spam). O link dura 15 minutos.')
+                toast('Boa! Verifique seu e-mail (e a caixa de spam). O link dura 15 minutos.')
                 setEmail('')
             })
-            .catch(() => alert('E-mail não encontrado ou erro no envio.'))
+            .catch(() => toast.error('E-mail não encontrado ou erro no envio.'))
             .finally(() => setLoading(false))
     }
 

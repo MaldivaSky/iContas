@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import api from '../api'
+import axios from 'axios'
 import { useParams, useNavigate } from 'react-router-dom'
+// 1. IMPORTAR O TOAST
+import { toast } from 'react-toastify';
 
 function RedefinirSenha() {
     const { token } = useParams()
@@ -8,39 +10,44 @@ function RedefinirSenha() {
 
     const [novaSenha, setNovaSenha] = useState('')
     const [confirmarSenha, setConfirmarSenha] = useState('')
-    const [erro, setErro] = useState('')
+    // const [erro, setErro] = useState('') // Não precisamos mais exibir erro em texto feio na tela!
 
     const validarSenhaForte = (senha) => {
-        // Regex: Min 6, 1 Maiúscula, 1 Número, 1 Especial
         const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
         return regex.test(senha);
     }
 
     const salvarNovaSenha = async (e) => {
         e.preventDefault()
-        setErro('')
+        // setErro('')
 
         if (novaSenha !== confirmarSenha) {
-            setErro("As senhas não conferem!")
+            // 2. SUBSTITUINDO ALERT/ERRO
+            toast.warn("As senhas não conferem!"); // Warn = Amarelo (Aviso)
             return
         }
 
         if (!validarSenhaForte(novaSenha)) {
-            setErro("Senha fraca: use min. 6 caracteres, 1 maiúscula, 1 número e 1 símbolo.")
+            toast.error("Senha fraca! Use maiúscula, número e símbolo."); // Error = Vermelho
             return
         }
 
+        const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        const baseURL = isLocal ? "http://127.0.0.1:5000" : "https://icontas.onrender.com";
+
         try {
-            await api.post('/resetar-senha-token',
+            await axios.post(`${baseURL}/resetar-senha-token`,
                 { nova_senha: novaSenha },
                 { headers: { Authorization: 'Bearer ' + token } }
             )
-            alert('✅ Senha alterada com sucesso! Redirecionando...')
+
+            // 3. SUCESSO = Verde
+            toast.success("Senha alterada com sucesso! Faça login.");
             navigate('/login')
         } catch (error) {
             console.error(error)
             const msg = error.response?.data?.erro || 'Link inválido ou expirado.'
-            alert(msg)
+            toast.error(msg);
         }
     }
 
@@ -49,14 +56,12 @@ function RedefinirSenha() {
             <h2 style={{ textAlign: 'center', color: '#820AD1' }}>Criar Nova Senha</h2>
 
             <form onSubmit={salvarNovaSenha}>
+                {/* Campos de input iguais... */}
                 <label style={{ fontWeight: 'bold' }}>Nova Senha:</label>
                 <input
                     type="password" value={novaSenha} onChange={e => setNovaSenha(e.target.value)}
                     required placeholder="Ex: SenhaForte1!" style={{ width: '100%', padding: 10, marginBottom: '10px', borderRadius: 5, border: '1px solid #ccc' }}
                 />
-                <small style={{ display: 'block', marginBottom: 15, color: '#666', fontSize: 12 }}>
-                    Mínimo 6 caracteres, 1 maiúscula, 1 número e 1 símbolo.
-                </small>
 
                 <label style={{ fontWeight: 'bold' }}>Confirme a Nova Senha:</label>
                 <input
@@ -64,7 +69,7 @@ function RedefinirSenha() {
                     required placeholder="Repita a senha" style={{ width: '100%', padding: 10, marginBottom: '20px', borderRadius: 5, border: '1px solid #ccc' }}
                 />
 
-                {erro && <p style={{ color: 'red', textAlign: 'center', marginBottom: 15 }}>{erro}</p>}
+                {/* Removi o <p>{erro}</p> pois o toast já avisa */}
 
                 <button type="submit" style={{
                     width: '100%', backgroundColor: '#0dc325', color: 'white', fontWeight: 'bold',

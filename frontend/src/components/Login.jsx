@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import api from '../api' 
 import { Link, useNavigate } from 'react-router-dom' // useNavigate é mais moderno
+import { toast } from 'react-toastify';
+
 
 function Login() {
     const [login, setLogin] = useState('')
@@ -36,14 +38,14 @@ function Login() {
             // Tratamento de erro detalhado
             if (error.response) {
                 if (error.response.status === 401) {
-                    alert("Usuário ou senha incorretos! Tente novamente.")
+                    toast.error("Usuário ou senha incorretos! Tente novamente.")
                 } else if (error.response.status === 500) {
-                    alert("Erro no Servidor! O banco de dados pode estar desconectado.")
+                    toast.error("Erro no Servidor! O banco de dados pode estar desconectado.")
                 } else {
-                    alert(`Erro desconhecido: ${error.response.status}`)
+                    toast.error(`Erro desconhecido: ${error.response.status}`)
                 }
             } else {
-                alert("Erro de conexão. Verifique sua internet.")
+                toast.error("Erro de conexão. Verifique sua internet.")
             }
         } finally {
             setLoading(false)

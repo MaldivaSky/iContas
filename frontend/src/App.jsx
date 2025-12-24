@@ -1,4 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+// --- 1. IMPORTAÇÕES DO TOASTIFY ---
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // O CSS obrigatório
+
 import Login from './components/Login';
 import Cadastro from './components/Cadastro';
 import Home from './components/Home';
@@ -36,6 +40,10 @@ function App() {
   return (
     <Router>
       <Layout>
+        {/* --- 2. COMPONENTE GLOBAL DE NOTIFICAÇÕES --- */}
+        {/* autoClose={4000} significa que somem em 4 segundos */}
+        <ToastContainer position="top-right" autoClose={4000} theme="colored" />
+
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/login" element={<Login />} />

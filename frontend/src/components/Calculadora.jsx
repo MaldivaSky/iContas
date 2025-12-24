@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify';
 
 function Calculadora() {
     const [visor, setVisor] = useState('')
@@ -52,7 +53,7 @@ function Calculadora() {
     // Função "Copiar" para facilitar a vida do usuário
     const copiarValor = () => {
         navigator.clipboard.writeText(resultado || visor)
-        alert("Valor copiado! Agora você pode colar na tela de transação.")
+        toast.success("Valor copiado! Agora você pode colar na tela de transação.")
     }
 
     return (

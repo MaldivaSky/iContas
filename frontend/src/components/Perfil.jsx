@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../api'
 // NavBar removido para não duplicar com o App.jsx
 import { PiFloppyDiskBold, PiCameraBold } from "react-icons/pi";
+import { toast } from 'react-toastify';
 
 function Perfil() {
     const [dados, setDados] = useState({
@@ -38,11 +39,11 @@ function Perfil() {
             // Atualiza o cache local para a NavBar saber o nome novo
             localStorage.setItem('usuario_nome', dados.nome_completo)
 
-            alert("Perfil atualizado com sucesso!")
+            toast.success("Perfil atualizado com sucesso!")
             window.location.reload() // Recarrega a página para atualizar a NavBar lá em cima
         } catch (error) {
             console.error(error)
-            alert("Erro ao atualizar perfil.")
+            toast.error("Erro ao atualizar perfil.")
         }
     }
 
@@ -64,12 +65,12 @@ function Perfil() {
             // --- REMOVIDO: localStorage.setItem('usuario_foto', ...) ---
             // Não salvamos mais no cache para não dar erro.
 
-            alert("Foto atualizada!")
+            toast.success("Foto atualizada!")
             window.location.reload()
 
         } catch (error) {
             console.error(error)
-            alert("Erro ao enviar foto.")
+            toast.error("Erro ao enviar foto.")
         }
     }
 

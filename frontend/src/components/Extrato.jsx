@@ -11,6 +11,8 @@ import {
     PiCalendarBlankBold // Ícone para data
 } from "react-icons/pi";
 
+import { toast } from 'react-toastify';
+
 function Extrato() {
     const [transacoes, setTransacoes] = useState([])
     const [loading, setLoading] = useState(true)
@@ -69,11 +71,11 @@ function Extrato() {
         if (!confirm("Tem certeza que deseja apagar?")) return;
         try {
             await api.delete(`/transacoes/${tipo}/${id}`)
-            alert("Item apagado!")
+            toast.success("Item apagado!")
             carregarExtrato()
         } catch (error) {
             console.error(error);
-            alert("Erro ao apagar item.")
+            toast("Erro ao apagar item.")
         }
     }
 
@@ -89,7 +91,7 @@ function Extrato() {
             link.remove();
         } catch (error) {
             console.error(error);
-            alert("Erro ao exportar.")
+            toast.error("Erro ao exportar.")
         }
     }
 
@@ -113,12 +115,12 @@ function Extrato() {
     const salvarEdicao = async () => {
         try {
             await api.put(`/transacoes/${editandoTipo}/${editandoId}`, editDados)
-            alert("Atualizado com sucesso!")
+            toast.success("Atualizado com sucesso!")
             cancelarEdicao()
             carregarExtrato()
         } catch (error) {
             console.error(error)
-            alert("Erro ao salvar edição.")
+            toast.error("Erro ao salvar edição.")
         }
     }
 
