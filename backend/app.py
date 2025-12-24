@@ -98,9 +98,29 @@ def expired_token_callback(jwt_header, jwt_payload):
 # ==============================================================================
 # 🏠 3. ROTA INICIAL
 # ==============================================================================
-@app.route("/")
-def home():
-    return "API iContas Blindada 🔒 - Privacidade Total Ativada"
+# --- ROTA QUE O DASHBOARD ESTÁ PROCURANDO ---
+@app.route("/home", methods=["GET"])
+@jwt_required()
+def home_data():
+    usuario_id = get_jwt_identity()
+    session = Session()
+
+    # 1. Busca os valores no banco
+    entradas = session.query(Entrada).filter_by(usuario_id=usuario_id).all()
+    saidas = session.query(Saida).filter_by(usuario_id=usuario_id).all()
+
+    # 2. Faz a matemática
+    total_entrada = sum([e.valor for e in entradas])
+    total_saida = sum([s.valor for s in saidas])
+    saldo = total_entrada - total_saida
+
+    session.close()
+
+    # 3. Entrega os números para o Frontend
+    return (
+        jsonify({"entradas": total_entrada, "saidas": total_saida, "saldo": saldo}),
+        200,
+    )
 
 
 # ==============================================================================
@@ -110,44 +130,67 @@ def home():
 
 @app.route("/registro", methods=["POST"])
 def registrar():
+    print("--- DEBUG: A rota /registro foi chamada! ---")  # <--- ADICIONE ISSO
     session = Session()
-    # Pega dados do formulário
-    nome_completo = request.form["nome_completo"]
-    username=username.lower(), # <--- Força minúsculo
-    email=email.lower(),
-    senha = request.form["senha"]
-    nascimento = request.form["nascimento"]
-    foto = request.files.get("foto")
+    try:
+        # IMPORTANTE: Quando vem arquivo, usamos request.form e request.files
+        # NÃO use request.json aqui
 
-    # Verifica duplicidade
-    if (
-        session.query(Usuario)
-        .filter((Usuario.email == email) | (Usuario.username == username))
-        .first()
-    ):
+        # 1. Pegar dados (com .get para evitar crash se faltar algo)
+        nome_completo = request.form.get("nome_completo")
+        username_input = request.form.get("username")
+        email_input = request.form.get("email")
+        senha = request.form.get("senha")
+        nascimento = request.form.get("nascimento")
+        foto = request.files.get("foto")  # Pega o arquivo se existir
+
+        # Validação básica
+        if not username_input or not email_input or not senha:
+            return jsonify({"erro": "Preencha os campos obrigatórios"}), 400
+
+        # Normalizar
+        username = username_input.lower()
+        email = email_input.lower()
+
+        # Verifica duplicidade
+        if (
+            session.query(Usuario)
+            .filter((Usuario.email == email) | (Usuario.username == username))
+            .first()
+        ):
+            return jsonify({"erro": "Email ou Usuário já cadastrado!"}), 400
+
+        # Processar Foto (Base64)
+        foto_dados = None
+        if foto:
+            file_content = foto.read()
+            encoded_string = base64.b64encode(file_content).decode("utf-8")
+            foto_dados = f"data:{foto.mimetype};base64,{encoded_string}"
+
+        # Criar Usuário
+        novo = Usuario(
+            nome_completo=nome_completo,
+            username=username,
+            email=email,
+            senha_hash=generate_password_hash(senha),
+            # Tratamento seguro para data (evita erro se vier vazio)
+            nascimento=(
+                datetime.strptime(nascimento, "%Y-%m-%d").date() if nascimento else None
+            ),
+            foto_path=foto_dados,
+        )
+
+        session.add(novo)
+        session.commit()
+        return jsonify({"mensagem": "Conta criada com sucesso!"}), 201
+
+    except Exception as e:
+        session.rollback()
+        # Esse print vai fazer o erro aparecer no seu terminal Python se acontecer de novo!
+        print(f"ERRO NO REGISTRO: {e}")
+        return jsonify({"erro": f"Erro interno: {str(e)}"}), 500
+    finally:
         session.close()
-        return jsonify({"erro": "Email ou Usuário já cadastrado!"}), 400
-
-    # Lógica da Foto (Base64 - Salva no Banco)
-    foto_dados = None
-    if foto:
-        file_content = foto.read()
-        encoded_string = base64.b64encode(file_content).decode("utf-8")
-        foto_dados = f"data:{foto.mimetype};base64,{encoded_string}"
-
-    novo = Usuario(
-        nome_completo=nome_completo,
-        username=username.lower(),  # <--- Força minúsculo
-        email=email.lower(),  # <--- Força minúsculo
-        senha_hash=generate_password_hash(senha),
-        nascimento=datetime.strptime(nascimento, "%Y-%m-%d").date(),
-        foto_path=foto_dados,  # Salva o código da imagem aqui
-    )
-
-    session.add(novo)
-    session.commit()
-    session.close()
-    return jsonify({"mensagem": "Conta criada com sucesso!"}), 201
 
 
 @app.route("/login", methods=["POST"])
@@ -288,6 +331,34 @@ def deletar_categoria(id):
         return jsonify({"erro": "Categoria não encontrada"}), 404
 
 
+@app.route("/categorias/<int:id>", methods=["PUT"])
+@jwt_required()
+def editar_categoria(id):
+    usuario_id = get_jwt_identity()
+    session = Session()
+    d = request.json
+
+    # 1. Busca a categoria garantindo que pertence ao usuário logado
+    categoria = session.query(Categoria).filter_by(id=id, usuario_id=usuario_id).first()
+
+    if not categoria:
+        session.close()
+        return (
+            jsonify({"erro": "Categoria não encontrada ou você não tem permissão."}),
+            404,
+        )
+
+    # 2. Atualiza os dados
+    if "principal" in d:
+        categoria.principal = d["principal"]
+    if "estabelecimento" in d:
+        categoria.estabelecimento = d["estabelecimento"]
+
+    session.commit()
+    session.close()
+    return jsonify({"mensagem": "Categoria atualizada com sucesso!"}), 200
+
+
 # --- ENTRADAS E SAÍDAS ---
 @app.route("/entradas", methods=["POST"])
 @jwt_required()
@@ -354,6 +425,38 @@ def deletar_transacao(tipo, id):
     else:
         session.close()
         return jsonify({"erro": "Item não encontrado"}), 404
+
+
+# --- ADICIONE ESTA NOVA ROTA PARA EDITAR TRANSAÇÕES ---
+@app.route("/transacoes/<tipo>/<int:id>", methods=["PUT"])
+@jwt_required()
+def editar_transacao(tipo, id):
+    usuario_id = get_jwt_identity()
+    session = Session()
+    d = request.json
+
+    item = None
+    if tipo == "entrada":
+        item = session.query(Entrada).filter_by(id=id, usuario_id=usuario_id).first()
+    elif tipo == "saida":
+        item = session.query(Saida).filter_by(id=id, usuario_id=usuario_id).first()
+
+    if not item:
+        session.close()
+        return jsonify({"erro": "Item não encontrado"}), 404
+
+    # Atualiza os campos que vieram no JSON
+    if "descricao" in d:
+        item.descricao = d["descricao"]
+    if "valor" in d:
+        item.valor = float(d["valor"])
+    if "data" in d:
+        item.data = datetime.strptime(d["data"], "%Y-%m-%d").date()
+    # Se quiser permitir mudar categoria, adicione aqui também
+
+    session.commit()
+    session.close()
+    return jsonify({"mensagem": "Transação atualizada!"}), 200
 
 
 # ==============================================================================
@@ -479,7 +582,9 @@ def exportar_relatorio():
     nome_cats = {c.id: c.principal for c in categorias}
 
     output = io.StringIO()
-    writer = csv.writer(output)
+    # CORREÇÃO 1: Usar ponto e vírgula (;) para o Excel brasileiro separar as colunas
+    writer = csv.writer(output, delimiter=";")
+
     writer.writerow(["ID", "Data", "Tipo", "Descrição", "Categoria", "Valor", "Local"])
 
     for e in entradas:
@@ -490,7 +595,9 @@ def exportar_relatorio():
                 "Entrada",
                 e.descricao,
                 nome_cats.get(e.categoria_id, ""),
-                e.valor,
+                str(e.valor).replace(
+                    ".", ","
+                ),  # Opcional: Trocar ponto por vírgula no preço
                 e.local,
             ]
         )
@@ -502,7 +609,7 @@ def exportar_relatorio():
                 "Saída",
                 s.descricao,
                 nome_cats.get(s.categoria_id, ""),
-                f"-{s.valor}",
+                str(s.valor * -1).replace(".", ","),
                 s.local,
             ]
         )
@@ -511,11 +618,15 @@ def exportar_relatorio():
     session.close()
 
     mem = io.BytesIO()
-    mem.write(output.getvalue().encode("utf-8"))
+    # CORREÇÃO 2: 'utf-8-sig' adiciona uma marca (BOM) que faz o Excel ler os acentos corretamente
+    mem.write(output.getvalue().encode("utf-8-sig"))
     mem.seek(0)
 
     return send_file(
-        mem, as_attachment=True, download_name="relatorio.csv", mimetype="text/csv"
+        mem,
+        as_attachment=True,
+        download_name="relatorio_financeiro.csv",
+        mimetype="text/csv",
     )
 
 

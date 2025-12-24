@@ -22,8 +22,8 @@ function Login() {
             const dados = resposta.data
 
             // Salva tudo
-            localStorage.setItem('token', dados.token)
-            localStorage.setItem('usuario_nome', dados.nome)
+            localStorage.setItem('usuario_dados', JSON.stringify(dados));
+            localStorage.setItem('token', dados.token);
             
 
             // Redireciona

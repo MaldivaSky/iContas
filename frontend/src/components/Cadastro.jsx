@@ -39,11 +39,7 @@ function Cadastro() {
             formData.append('foto', foto)
         }
 
-        api.post('/registro', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data' // Avisa o Python que tem arquivo indo
-            }
-        })
+        api.post('/registro', formData)
             .then(() => {
                 alert('Conta criada com sucesso! Agora faça login.')
                 setNomeCompleto('')

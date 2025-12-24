@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
+// NavBar removido daqui para evitar duplicação
 import './Home.css';
 
-// --- IMPORTANDO ÍCONES MODERNOS (Phosphor Icons) ---
 import {
-    PiCurrencyDollarSimpleBold, // Para Registrar (Dinheiro)
-    PiReceiptBold,              // Para Extrato (Recibo)
-    PiChartPieSliceBold,        // Para Gráficos
-    PiTagBold,                  // Para Categorias
-    PiCalculatorBold            // Para Calculadora
+    PiCurrencyDollarSimpleBold,
+    PiReceiptBold,
+    PiChartPieSliceBold,
+    PiTagBold,
+    PiCalculatorBold
 } from "react-icons/pi";
 
 function Home() {
@@ -20,16 +20,34 @@ function Home() {
         async function carregarTudo() {
             try {
                 const respUsuario = await api.get('/meus-dados');
-                await api.get('/dados-graficos');
+                // Tenta carregar dados gráficos (opcional)
+                try { await api.get('/dados-graficos'); } catch (e) { console.error(e); }
+
+                const nomeCompleto = respUsuario.data.nome_completo;
+                const foto = respUsuario.data.foto;
+
+                // --- GARANTIA PARA O NAVBAR GLOBAL ---
+                // Isso aqui é crucial: alimenta o localStorage para que o NavBar do App.jsx funcione
+                localStorage.setItem('usuario_nome', nomeCompleto);
+                if (foto) localStorage.setItem('usuario_foto', foto);
 
                 setUsuario({
-                    nome: respUsuario.data.nome_completo.split(' ')[0],
-                    foto: respUsuario.data.foto
+                    nome: nomeCompleto.split(' ')[0],
+                    foto: foto
                 });
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
-                const nomeLocal = localStorage.getItem('usuario_nome');
-                if (nomeLocal) setUsuario(prev => ({ ...prev, nome: nomeLocal }));
+
+                const dadosLocal = localStorage.getItem('usuario_dados');
+                if (dadosLocal) {
+                    const userObj = JSON.parse(dadosLocal);
+                    localStorage.setItem('usuario_nome', userObj.nome); // Fallback para NavBar
+
+                    setUsuario({
+                        nome: userObj.nome ? userObj.nome.split(' ')[0] : 'Visitante',
+                        foto: userObj.foto
+                    });
+                }
             } finally {
                 setLoading(false);
             }
@@ -46,11 +64,12 @@ function Home() {
         );
     }
 
-    // Estilo padrão para os ícones (Roxo do App)
     const iconStyle = { color: '#6d0582ff', marginBottom: '8px' };
 
     return (
         <div style={{ paddingBottom: '40px', backgroundColor: '#f9f9f9', minHeight: '100vh' }}>
+
+            {/* NavBar removida daqui (ela virá do App.jsx) */}
 
             {/* CABEÇALHO */}
             <div style={{
@@ -86,44 +105,37 @@ function Home() {
                 <p style={{ margin: '5px 0 0 0', opacity: 0.8, fontSize: '14px' }}>Controle Financeiro iContas</p>
             </div>
 
-            {/* MENU COM ÍCONES NOVOS */}
+            {/* MENU GRID */}
             <div style={{ padding: '0 20px' }}>
                 <h3 style={{ color: '#820AD1', marginBottom: '20px', textAlign: 'center', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                     Menu Principal
                 </h3>
 
                 <div className="menu-grid" style={{ boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
-
                     <Link to="/transacoes" className="card-menu">
-                        {/* Ícone de Dinheiro */}
                         <PiCurrencyDollarSimpleBold size={40} style={iconStyle} />
                         <strong>Registrar</strong>
                     </Link>
 
                     <Link to="/extrato" className="card-menu">
-                        {/* Ícone de Recibo */}
                         <PiReceiptBold size={40} style={iconStyle} />
                         <strong>Extrato</strong>
                     </Link>
 
                     <Link to="/analise" className="card-menu">
-                        {/* Ícone de Pizza/Gráfico */}
                         <PiChartPieSliceBold size={40} style={iconStyle} />
                         <strong>Gráficos</strong>
                     </Link>
 
                     <Link to="/categorias" className="card-menu">
-                        {/* Ícone de Etiqueta */}
                         <PiTagBold size={40} style={iconStyle} />
                         <strong>Categorias</strong>
                     </Link>
 
                     <Link to="/calculadora" className="card-menu">
-                        {/* Ícone de Calculadora */}
                         <PiCalculatorBold size={40} style={iconStyle} />
                         <strong>Calculadora</strong>
                     </Link>
-
                 </div>
             </div>
         </div>
